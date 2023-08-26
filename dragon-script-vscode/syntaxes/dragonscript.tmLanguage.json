@@ -72,7 +72,19 @@
 			"patterns": [
 				{
 					"name": "keyword.control.dragonscript",
-					"match": "\\b(if|for|return|break|continue)\\b"
+					"match": "\\b(if|else|elif|for|return|break|continue|in)\\b"
+				},
+				{
+					"name": "keyword.declaration.dragonscript",
+					"match": "\\b(function)\\b"
+				},
+				{
+					"name": "storage.modifier.dragonscript",
+					"match": "\\b(mut|const)\\b"
+				},
+				{
+					"name": "keyword.other.import.dragonscript",
+					"match": "\\b(use|super)\\b"
 				}
 			]
 		},
