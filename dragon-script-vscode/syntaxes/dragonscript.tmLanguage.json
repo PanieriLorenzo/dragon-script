@@ -6,6 +6,9 @@
 			"include": "#comments"
 		},
 		{
+			"include": "#punctuation"
+		},
+		{
 			"include": "#keywords"
 		},
 		{
@@ -46,6 +49,22 @@
 							"include": "#comments-block"
 						}
 					]
+				}
+			]
+		},
+		"punctuation": {
+			"patterns": [
+				{
+					"name": "punctuation.comma.dragonscript",
+					"match": ","
+				},
+				{
+					"name": "punctuation.terminator.dragonscript",
+					"match": ";"
+				},
+				{
+					"name": "punctuation.dot.dragonscript",
+					"match": "\\."
 				}
 			]
 		},
