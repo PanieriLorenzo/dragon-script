@@ -17,9 +17,6 @@
 // Bulgarian
 "Здравей свят!".print()
 
-// Mandarin Chinese
-"你好世界！".print()
-
 // Greek
 "Γειά σου Κόσμε!".print()
 
@@ -43,6 +40,9 @@
 
 // Malayalam
 "ഹലോ വേൾഡ്!".print()
+
+// Mandarin Chinese
+"你好世界！".print()
 
 // Myanmar
 "မင်္ဂလာပါကမ္ဘာလောက!".print()
