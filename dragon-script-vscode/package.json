@@ -1,0 +1,25 @@
+{
+  "name": "dragon-script-vscode",
+  "displayName": "dragon_script_vscode",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.81.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "dragonscript",
+      "aliases": ["DragonScript", "dragonscript"],
+      "extensions": [".drgns"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "dragonscript",
+      "scopeName": "source.dragonscript",
+      "path": "./syntaxes/dragonscript.tmLanguage.json"
+    }]
+  }
+}
