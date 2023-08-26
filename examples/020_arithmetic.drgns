@@ -1,0 +1,29 @@
+// Addition
+1 + 2
+1.1 + 2.2
+
+// Subtraction
+2 - 1
+2.2 - 1.1
+
+// Multiplication
+2 * 3
+2.2 * 3.3
+
+// Division
+3 / 2
+3.3 / 2.2
+
+// Remainder
+3 % 2
+
+// Float modulo, known as "fmod" in many languages
+3.3 % 2.2
+
+// Exponentiation
+2 ** 3
+2.2 ** 3.3
+
+// Negation
+-1
+-1.1

@@ -1,0 +1,18 @@
+// Assigning to a char in a string
+mut foo := "Lock"
+foo[0] = 'S'
+
+// Assigning to an element in a list
+mut bar := [1, 2, 3, 5]
+bar[-1] = 4
+
+// Assign to a key in an object, if the key doesn't exist it creates it
+mut person := {}
+person[^name] = "Kirby"
+
+// If the key is a symbol, we can also use this syntax
+person.age = 150
+
+// The none coalescing assignment is very useful here, it will only update
+// if the field is `none` or missing.
+person.name ??= "Steve"

@@ -1,0 +1,47 @@
+// Block
+foo := {
+    break 42
+}
+
+// If
+bar := if true {
+    "Yay!"
+} else {
+    "The compiler has an error..."
+}
+
+// Else can be omitted, in which case it will default to none
+baz := if false {
+    "The compiler has an error..."
+}
+
+// Chains can be made with `elif`
+qux := if true {
+    "Yay!"
+} elif true and true {
+    "Uh!?"
+} else {
+    "Oh no! The compiler is busted!!!"
+}
+
+// For loops without arguments are infinite
+for {
+    // Unless we break out of them
+    break
+}
+
+// Breaking with an argument returns that argument
+foobar := for {
+    break 42
+}
+
+// Iterating over elements of a list
+even_numbers := for x in [1, 2, 3, 4, 5, 6] {
+    if x % 2 != 0 {
+        // Continuing without an argument doesn't return anything
+        continue
+    }
+    // Continuing with an argument collects it into a list
+    continue x
+}
+// Note that loops that don't return any value, return `none` by default

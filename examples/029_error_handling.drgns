@@ -1,0 +1,16 @@
+// The `?` operator early returns on `none` or `error`
+mut maybe_foo: int | none := none
+function foo() -> {
+    maybe_foo?
+
+    // This won't run!
+    panic!()
+}
+
+// The `??` operator returns the right hand side if the left is `none` or `error`.
+// Like the C# "null coalescing" operator.
+definitely_foo := maybe_foo ?? 42
+
+// The `??=` statement is the same as the `??` but on assignment (technically
+// this is a statement)
+maybe_foo ??= 42

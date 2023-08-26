@@ -1,0 +1,16 @@
+// To specify a passing mode other than the default, we explicitly use the
+// operators `move` and `copy`.
+foo := 42
+bar := move foo
+mut baz := copy bar
+
+// We can do so when calling functions too. We also need to use the `mut`
+// keyword to pass a mutable reference. This is always explicit for mutable
+// arguments.
+function increment_and_print!(mut x: int) -> int {
+    x += 1
+    x.print()
+}
+increment_and_print!(mut baz)
+increment_and_print!(copy bar)
+increment_and_print!(move bar)

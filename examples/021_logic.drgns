@@ -1,0 +1,25 @@
+// Normal comparisons
+1 < 2
+1 <= 2
+2 > 1
+2 >= 1
+1 == 1
+1 != 2
+
+// Regex comparison
+'[a-z]+' =~ "hello"
+
+// Boolean and
+true and true
+
+// Boolean or
+true or false
+false or true
+true or true
+
+// Boolean not
+not false
+
+// Boolean xor
+true xor false
+false xor true

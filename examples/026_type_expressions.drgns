@@ -1,0 +1,16 @@
+// Right now, there's no way to define custom types in DragonScript, but you
+// can annotate dynamic variables with a syntax similar to sum-types
+maybe_foo: int | none := 42
+
+// You can also annotate multiple returns with a comma (product type)
+function swap_numbers(x: int, y: int) -> int, int {
+    return y, x
+}
+
+// Comma has a higher priority, you can use parentheses to change it
+function swap_if_different(x: int, y: int) -> none | int, int {
+    if x == y {
+        return none
+    }
+    return y, x
+}

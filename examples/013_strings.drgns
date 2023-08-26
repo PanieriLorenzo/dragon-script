@@ -1,0 +1,17 @@
+// A normal string
+"This string has spaces in it!"
+
+// The empty string
+""
+
+// This string is "raw", as in it doesn't interpret any characters with
+// special meaning, so it cannot escape characters or do interpolation
+'This string is raw!, look, this is not a newline: \n. Crazy!'
+
+// This is a "symbol" a special string that represents the name of a symbol
+// in the DragonScript language. Symbols follow the same rules as identifiers.
+// Symbols are useful for meta-programming.
+^ILikePascalCase
+^i_like_snake_case
+^No_One_Likes_This_Case
+^look_a_number_1234

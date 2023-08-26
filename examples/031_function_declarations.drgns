@@ -1,0 +1,35 @@
+// This is a basic function
+function increment(x: int) -> int {
+    return x + 1
+}
+
+// This function mutates the argument, we sometimes call this a procedure.
+// The bang at the end is enforced by default style guidelines, but it isn't
+// strictly required.
+function increment!(mut x: int) -> {
+    x += 1
+}
+
+// Methods are defined by adding an additional "receiver" before the argument
+// list
+function double!(self: int)() -> {
+    self *= 2
+}
+
+// We can return multiple values
+function my_favorite_numbers() -> int, int {
+    return 17, 24
+}
+
+// If a function never returns, we can annotate it with the `never` type.
+// This is not required, but it improves type inference down the line, so
+// it's good practice!
+function crash_and_burn() -> never {
+    panic!("what did you expect?")
+}
+
+// We can have optional arguments at the end of the parameter list, in this
+// case we are allowed to omit the type annotation
+function sqrt(x: float, base = 2.0) -> int {
+    return x ** (1.0 / base)
+}

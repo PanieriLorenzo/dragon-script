@@ -1,0 +1,9 @@
+// This is a comment!
+/* This is also a comment /* which can be nested */ */
+
+// Statements are newline separated
+foo := 1
+bar := 2
+
+// They can be inlined with a semicolon
+baz := 3; qux := 4

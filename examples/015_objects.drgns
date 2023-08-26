@@ -1,0 +1,18 @@
+// A simple object
+{^foo: 1, ^bar: 2, ^baz: 3}
+
+// Newline separated
+{
+    ^foo: 1
+    ^bar: 2
+    ^baz: 3
+}
+
+// Empty object
+{}
+
+// Get a value from an object, will return `none` if it doesn't exist
+{"key": "value"}["key"]
+
+// If the keys are symbols, you can use this syntax instead
+{^key: "value"}.key

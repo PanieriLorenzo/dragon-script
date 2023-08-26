@@ -1,0 +1,21 @@
+// Closures are just anonymous function bodies that can be passed around.
+increment := (x: int) -> int {
+    return x + 1
+}
+
+// Closures can be significantly simplified compared to functions, if the
+// context in which they are used makes it obvious how to infer the types.
+//
+// Here we omitted the return type, and because it is a single expression,
+// we don't need the braces and the `return` keyword`
+increment_shorter := (x: int) -> x + 1
+
+// When used in an expression, even the argument can be omitted
+[1, 2, 3].map(-> _ + 1)
+
+// Like functions, closures that modify their arguments must have a bang at
+// the end of their name.
+// Unlike with functions, because closures are anonymous, the compiler cannot
+// always enforce this rule, so this is not a hard error, but rather a style
+// error.
+increment! := (mut x: int) -> x += 1

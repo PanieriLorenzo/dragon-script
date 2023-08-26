@@ -1,0 +1,41 @@
+// Concatenate
+mut foo := [1, 2] ++ [3, 4]
+
+// Concatenation assignment
+foo ++= [5, 6]
+
+// Push back
+foo << 7
+
+// Push front
+0 >> foo
+
+// Indexing
+foo[0]
+
+// Slicing
+foo[:4]
+foo[:-1]
+foo[1:]
+foo[1:4]
+foo[::2]
+foo[::-1]
+
+// Concatenate two strings
+mut adjective := "scary"
+mut foo := "Dragons " ++ "are " ++ adjective
+
+// Interpolation
+adjective = "cool"
+foo = "Dragons are ${adjective}"
+
+// Indexing
+foo[0]
+
+// Slicing
+foo[:4]
+foo[:-1]
+foo[1:]
+foo[1:4]
+foo[::2]
+foo[::-1]

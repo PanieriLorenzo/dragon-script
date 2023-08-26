@@ -1,0 +1,29 @@
+// integers
+123456
+
+// separators can be freely placed in the literal
+1_23_456_7890
+
+// hex
+0xAB_CD_12_34
+
+// lowercase is also ok, but will raise a warning
+0xab_cd_12_34
+
+// mixing is also ok, but will also raise a warning
+0xAb_Cd_12_34
+
+// octal
+0o1234_5670
+
+// binary
+0b0100_1011
+
+// floats
+3.14
+
+// scientific notation
+123.0E+20
+123.0E-20
+
+// note that the sign of a number is always parsed as the unary operator "-"

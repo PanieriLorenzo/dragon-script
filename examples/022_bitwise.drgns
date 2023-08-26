@@ -1,0 +1,36 @@
+// Bitwise operators are a bit of an afterthought and might change in the future
+// because bitwise operations are just not very common. In a general-purpose
+// high-level language like DragonScript, operations like pushing to a list
+// is way more common than bitwise operators, so the << and >> operators are
+// used for lists instead. I don't like excessive operator overloading, so I
+// didn't feel comfortable having << both mean push and left-shift, as these
+// are two completely different concepts.
+//
+// The | operator is already way more useful for defining sum-types, and so
+// by extension, & and ~ are reserved for type-expressions in the future (even
+// though they are not in use at the moment).
+//
+// The ^ operator by far is the least useful as a bitwise operator. The times
+// you'll need to use bitwise xor in your life can probably be counted on one
+// hand, unless you are working in cryptography, in which case, don't use DragonScript!
+
+// Bitwise and
+0b1011 land 0b0101
+
+// Bitwise or
+0b0000 lor 0b0001
+
+// Bitwise not
+lnot 0b0
+
+// Bitwise xor
+0b1010 lxor 0b1011
+
+// Bitwise left shift
+1 lsl 4
+
+// Bitwise logical right shift
+0b1000 lsr 3
+
+// Bitwise arithmetic right shift
+0b1000 asr 3

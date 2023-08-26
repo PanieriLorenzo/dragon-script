@@ -1,0 +1,15 @@
+// A simple list literal
+[1, 2, 3]
+
+// Newline separated
+[
+    1
+    2
+    3
+]
+
+// Empty list
+[]
+
+// Initializer syntax
+[42; 100]

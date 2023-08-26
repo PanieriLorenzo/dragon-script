@@ -1,0 +1,39 @@
+// It's important to note that Dragon is an expression-based language, there
+// are very few statements.
+//
+// In fact, while `:=` is a statement, all other assignments are expressions,
+// they return `none`. This is to avoid usage of assignments inside
+// expressions, which is notoriously difficult to understand.
+
+// We declare a variable with the initialization statement `:=`.
+foo := 42
+
+// We declare mutable variables by prepending the `mut` keyword
+mut bar := none
+
+// We update a mutable variable with the assigment operator `=`.
+bar = foo
+
+// We declare a constant by prepending the `const` keyword
+const PI := TAU / 2.0
+
+// We can optionally specify a type, otherwise the type will be inferred
+maybe_baz: int | none = bar
+
+// We can declare multiple variables at once
+foobar, foobaz := 1, 2
+
+// Or declare multiple variables with the same value
+
+
+// Or unpack a multiple return
+fooqux, barfoo := {
+    break 1, 2
+}
+
+// Many operators have a statement form, the following list is incomplete
+mut barbaz := 42
+barbaz += 1
+barbaz *= 2
+barbaz -= 3
+barbaz /= 4

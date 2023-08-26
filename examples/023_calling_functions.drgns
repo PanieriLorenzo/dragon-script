@@ -1,0 +1,8 @@
+// Calling a simple function
+function double(x: int) -> int {
+    return x * 2
+}
+foo := double(21)
+
+// Calling a method
+foo.print()
