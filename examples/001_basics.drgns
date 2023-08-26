@@ -7,3 +7,11 @@ bar := 2
 
 // They can be inlined with a semicolon
 baz := 3; qux := 4
+
+// Declare and use a module
+barfoo := "Hi!"
+mod my_module {
+    foobar := super::barfoo
+}
+use my_module
+my_module::foobar.print()

@@ -29,12 +29,9 @@
 		"comments-inline": {
 			"patterns": [
 				{
-					"match": "((//).*)$",
-					"captures": {
-						"1": {
-							"name": "comment.line.double-slash.dragonscript"
-						}
-					}
+					"name": "comment.line.double-slash.dragonscript",
+					"begin": "//",
+					"end": "$"
 				}
 			]
 		},
@@ -71,20 +68,68 @@
 		"keywords": {
 			"patterns": [
 				{
-					"name": "keyword.control.dragonscript",
-					"match": "\\b(if|else|elif|for|return|break|continue|in)\\b"
+					"include": "#keywords-flow"
 				},
 				{
-					"name": "keyword.declaration.dragonscript",
-					"match": "\\b(function)\\b"
+					"include": "#keywords-declaration"
 				},
+				{
+					"include": "#keywords-modifier"
+				},
+				{
+					"include": "#keywords-vars"
+				},
+				{
+					"include": "#keywords-types"
+				},
+				{
+					"name": "keyword.other.dragonscript",
+					"match": "\\b(use|mod|copy|move)\\b"
+				}
+			]
+		},
+		"keywords-flow": {
+			"patterns": [
+				{
+					"name": "keyword.control.dragonscript",
+					"match": "\\b(if|else|elif|for|return|break|continue|in)\\b"
+				}
+			]
+		},
+		"keywords-declaration": {
+			"patterns": [
+				{
+					"name": "keyword.declaration.dragonscript",
+					"match": "\\bfunction\\b"
+				}
+			]
+		},
+		"keywords-modifier": {
+			"patterns": [
 				{
 					"name": "storage.modifier.dragonscript",
 					"match": "\\b(mut|const)\\b"
+				}
+			]
+		},
+		"keywords-vars": {
+			"patterns": [
+				{
+					"name": "variable.language.dragonscript",
+					"match": "\\b(super|self)\\b"
+				}
+			]
+		},
+		"keywords-types": {
+			"patterns": [
+				{
+					"name": "storage.type.core.dragonscript",
+					"match": "\\b(bool|int|float|sym|str|list|obj)\\b"
 				},
 				{
-					"name": "keyword.other.import.dragonscript",
-					"match": "\\b(use|super)\\b"
+					"comment": "These types have very special meanings",
+					"name": "support.type.dragonscript",
+					"match": "\\b(any|none|never|error)\\b"
 				}
 			]
 		},
