@@ -1,5 +1,5 @@
-# boolean true, represents "truth" "yes" "1" "high"
+// boolean true, represents "truth" "yes" "1" "high"
 true
 
-# boolean false, represents "falsehood" "no" "0" "low"
+// boolean false, represents "falsehood" "no" "0" "low"
 false
