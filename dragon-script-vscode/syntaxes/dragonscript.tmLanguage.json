@@ -3,6 +3,9 @@
 	"name": "DragonScript",
 	"patterns": [
 		{
+			"include": "#comments"
+		},
+		{
 			"include": "#keywords"
 		},
 		{
@@ -10,11 +13,49 @@
 		}
 	],
 	"repository": {
+		"comments": {
+			"patterns": [
+				{
+					"include": "#comments-inline"
+				},
+				{
+					"include": "#comments-block"
+				}
+			]
+		},
+		"comments-inline": {
+			"patterns": [
+				{
+					"match": "((//).*)$",
+					"captures": {
+						"1": {
+							"name": "comment.line.double-slash.dragonscript"
+						}
+					}
+				}
+			]
+		},
+		"comments-block": {
+			"patterns": [
+				{
+					"name": "comment.block.dragonscript",
+					"begin": "/\\*",
+					"end": "\\*/",
+					"patterns": [
+						{
+							"include": "#comments-block"
+						}
+					]
+				}
+			]
+		},
 		"keywords": {
-			"patterns": [{
-				"name": "keyword.control.dragonscript",
-				"match": "\\b(if|while|for|return)\\b"
-			}]
+			"patterns": [
+				{
+					"name": "keyword.control.dragonscript",
+					"match": "\\b(if|for|return|break|continue)\\b"
+				}
+			]
 		},
 		"strings": {
 			"name": "string.quoted.double.dragonscript",
