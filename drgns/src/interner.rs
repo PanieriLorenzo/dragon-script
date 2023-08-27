@@ -5,8 +5,9 @@ use append_only_vec::AppendOnlyVec;
 //static STRING_ARENA: OnceLock<RwLock<Vec<String>>> = OnceLock::new();
 static STRING_ARENA: AppendOnlyVec<String> = AppendOnlyVec::new();
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub struct Span {
+    arena: &'static AppendOnlyVec<String>,
     pub lin_start: usize,
     pub col_start: usize,
     pub lin_len: usize,
@@ -15,7 +16,8 @@ pub struct Span {
 
 impl Display for Span {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut slice = STRING_ARENA
+        let mut slice = self
+            .arena
             .iter()
             .skip(self.lin_start)
             .take(self.lin_len)
@@ -45,6 +47,7 @@ pub fn intern_raw(src: String) -> Vec<Span> {
         .map(|lin| {
             let lin_idx = STRING_ARENA.push(lin.to_owned());
             Span {
+                arena: &STRING_ARENA,
                 lin_start: lin_idx,
                 col_start: 0,
                 lin_len: 1,
