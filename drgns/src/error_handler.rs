@@ -23,24 +23,36 @@
 //! - fatal: the compiler did something it shouldn't have done. These errors
 //!          are the bad ones, they should never occur.
 
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard,
+use std::{
+    process::exit,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard,
+    },
 };
 
 /// Print the errors collected so far and returns the most appropriate UNIX
 /// error code.
 pub fn display_errors() -> i32 {
-    let er = error_reader();
-    for e in er.iter() {
-        println!("{}", e);
+    // display and discard errors in the buffer
+    {
+        let mut ew = error_writer();
+        for e in ew.iter() {
+            println!("{}", e);
+        }
+        ew.clear();
     }
+
     // TODO: right now it always returns 0 or 1
-    if HAS_ERROR.load(Ordering::Relaxed) {
-        return 1;
+    // calculate error code and reset error status
+    let exit_code = if HAS_ERROR.load(Ordering::Relaxed) {
+        1
     } else {
-        return 0;
-    }
+        0
+    };
+    HAS_ERROR.store(false, Ordering::Relaxed);
+
+    exit_code
 }
 
 /// Reports an uncategorized error, should be considered as a To-Do for adding
@@ -48,6 +60,11 @@ pub fn display_errors() -> i32 {
 pub fn err_generic(msg: impl std::fmt::Debug) {
     const CODE: u32 = 00001;
     push_error(CODE, msg);
+}
+
+pub fn fatal_io_generic(msg: impl std::fmt::Debug) -> ! {
+    const CODE: u32 = 01000;
+    crash_and_burn(CODE, msg);
 }
 
 pub fn err_io_not_found(path: &str) {
