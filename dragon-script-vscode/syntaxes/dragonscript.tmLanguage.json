@@ -12,6 +12,9 @@
 			"include": "#keywords"
 		},
 		{
+			"include": "#operators"
+		},
+		{
 			"include": "#strings"
 		}
 	],
@@ -130,6 +133,36 @@
 					"comment": "These types have very special meanings",
 					"name": "support.type.dragonscript",
 					"match": "\\b(any|none|never|error)\\b"
+				}
+			]
+		},
+		"operators": {
+			"patterns": [
+				{
+					"include": "#operators-numeric"
+				},
+				{
+					"name": "keyword.operator.misc.dragonscript",
+					"match": "::"
+				}
+			]
+		},
+		"operators-numeric": {
+			"patterns": [
+				{
+					"comment": "Arithmetic",
+					"name": "keyword.operator.arithmetic.dragonscript",
+					"match": "(+|-|*|/|**|%)"
+				},
+				{
+					"comment": "Logic",
+					"name": "keyword.operator.logic.dragonscript",
+					"match": "\\b(and|or|xor|not)\\b"
+				},
+				{
+					"comment": "Comparison",
+					"name": "keyword.operator.comparison.dragonscript",
+					"match": "(<=|>=|<|>|==|!=|=~)"
 				}
 			]
 		},
