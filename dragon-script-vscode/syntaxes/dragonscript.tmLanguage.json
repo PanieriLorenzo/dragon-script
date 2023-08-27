@@ -1,12 +1,16 @@
 {
 	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
 	"name": "DragonScript",
+	"scopeName": "source.dragonscript",
 	"patterns": [
 		{
 			"include": "#comments"
 		},
 		{
 			"include": "#literals"
+		},
+		{
+			"include": "#strings"
 		},
 		{
 			"include": "#punctuation"
@@ -18,7 +22,7 @@
 			"include": "#operators"
 		},
 		{
-			"include": "#strings"
+			"include": "#identifiers"
 		}
 	],
 	"repository": {
@@ -298,7 +302,30 @@
 			"name": "string.quoted.single.dragonscript",
 			"begin": "'",
 			"end": "'"
+		},
+		"identifiers": {
+			"patterns": [
+				{
+					"include": "#identifiers-builtin-functions"
+				}
+			]
+		},
+		"identifiers-builtin-functions": {
+			"patterns": [
+				{
+					"name": "support.function.builtin.dragonscript",
+					"match": "\\b(abs|divmod|enumerate|exit|filter|fold|hash|id|is_type|is_none)\\b"
+				},
+				{
+					"name": "support.function.builtin.dragonscript",
+					"match": "\\b(is_some|is_error|len|map|max|min|next|print|rev|round|sort|sum)\\b"
+				},
+				{
+					"comment": "Casting",
+					"name": "support.function.builtin.dragonscript",
+					"match": "\\b(to_int|to_bool|to_float|to_str|to_sym|to_list|to_obj)\\b"
+				}
+			]
 		}
-	},
-	"scopeName": "source.dragonscript"
+	}
 }
