@@ -1,5 +1,6 @@
 use clap::{Error, Parser};
 use error_handler as eh;
+use interner::intern_raw;
 use std::{
     io::Write,
     process::{exit, ExitCode},
@@ -7,6 +8,7 @@ use std::{
 };
 
 mod error_handler;
+mod interner;
 
 // TODO: overwrite built-in error handling for consistent style
 #[derive(Parser, Debug)]
@@ -69,4 +71,7 @@ fn run_prompt() -> ! {
     }
 }
 
-fn run(source: String) {}
+fn run(source: String) {
+    let lines = intern_raw(source);
+    lines.iter().for_each(|lin| println!("{}", lin))
+}
