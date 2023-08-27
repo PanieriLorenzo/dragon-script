@@ -6,6 +6,9 @@
 			"include": "#comments"
 		},
 		{
+			"include": "#literals"
+		},
+		{
 			"include": "#punctuation"
 		},
 		{
@@ -227,7 +230,60 @@
 				}
 			]
 		},
+		"literals": {
+			"patterns": [
+				{
+					"name": "constant.numeric.float.dragonscript",
+					"match": "\\b[0-9][0-9_]*\\.[0-9][0-9_]*([eE][+-]?[0-9][0-9_]*)?\\b"
+				},
+				{
+					"name": "constant.language.boolean.dragonscript",
+					"match": "\\b(true|false|\\.\\.\\.)\\b"
+				},
+				{
+					"name": "constant.language.symbol.dragonscript",
+					"match": "\\^[a-zA-Z_][a-zA-Z0-9_]+\\b"
+				},
+				{
+					"include": "#literals-integer"
+				}
+			]
+		},
+		"literals-integer": {
+			"patterns": [
+				{
+					"name": "constant.numeric.integer.decimal.dragonscript",
+					"match": "\\b[0-9][0-9_]*\\b"
+				},
+				{
+					"name": "constant.numeric.integer.hexadecimal.dragonscript",
+					"match": "\\b0x[a-fA-F0-9_]+\\b"
+				},
+				{
+					"name": "constant.numeric.integer.octal.dragonscript",
+					"match": "\\b0o[0-8_]+\\b"
+				},
+				{
+					"name": "constant.numeric.integer.binary.dragonscript",
+					"match": "\\b0b[01_]+\\b"
+				},
+				{
+					"name": "invalid.illegal.name.dragonscript",
+					"match": "\\b[0-9]+\\w+"
+				}
+			]
+		},
 		"strings": {
+			"patterns": [
+				{
+					"include": "#strings-normal"
+				},
+				{
+					"include": "#strings-raw"
+				}
+			]
+		},
+		"strings-normal": {
 			"name": "string.quoted.double.dragonscript",
 			"begin": "\"",
 			"end": "\"",
@@ -237,6 +293,11 @@
 					"match": "\\\\."
 				}
 			]
+		},
+		"strings-raw": {
+			"name": "string.quoted.single.dragonscript",
+			"begin": "'",
+			"end": "'"
 		}
 	},
 	"scopeName": "source.dragonscript"
