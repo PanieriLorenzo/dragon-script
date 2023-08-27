@@ -65,6 +65,14 @@
 				{
 					"name": "punctuation.dot.dragonscript",
 					"match": "\\."
+				},
+				{
+					"name": "punctuation.arrow.dragonscript",
+					"match": "->"
+				},
+				{
+					"name": "punctuation.colon.dragonscript",
+					"match": ":"
 				}
 			]
 		},
@@ -142,6 +150,15 @@
 					"include": "#operators-numeric"
 				},
 				{
+					"include": "#operators-collections"
+				},
+				{
+					"include": "#operators-assignment"
+				},
+				{
+					"include": "#operators-error"
+				},
+				{
 					"name": "keyword.operator.misc.dragonscript",
 					"match": "::"
 				}
@@ -152,7 +169,7 @@
 				{
 					"comment": "Arithmetic",
 					"name": "keyword.operator.arithmetic.dragonscript",
-					"match": "(+|-|*|/|**|%)"
+					"match": "(\\+|-|\\*|/|\\*\\*|%)"
 				},
 				{
 					"comment": "Logic",
@@ -163,6 +180,50 @@
 					"comment": "Comparison",
 					"name": "keyword.operator.comparison.dragonscript",
 					"match": "(<=|>=|<|>|==|!=|=~)"
+				},
+				{
+					"comment": "Bitwise",
+					"name": "keyword.operator.bitwise.dragonscript",
+					"match": "(land|lor|lxor|lnot|lsl|lsr|asr)"
+				}
+			]
+		},
+		"operators-collections": {
+			"patterns": [
+				{
+					"name": "keyword.operator.concat.dragonscript",
+					"match": "\\+\\+"
+				},
+				{
+					"name": "keyword.operator.push.dragonscript",
+					"match": "(<<|>>)"
+				}
+			]
+		},
+		"operators-assignment": {
+			"patterns": [
+				{
+					"comment": "Basic",
+					"name": "keyword.operator.assignment.dragonscript",
+					"match": "(=|:=)"
+				},
+				{
+					"comment": "Arithmetic",
+					"name": "keyword.operator.assignment.dragonscript",
+					"match": "(\\+=|-=|/=|\\*=|%=|\\**=)"
+				},
+				{
+					"comment": "Error coalescing",
+					"name": "keyword.operator.assignment.dragonscript",
+					"match": "\\?\\?="
+				}
+			]
+		},
+		"operators-error": {
+			"patterns": [
+				{
+					"name": "keyword.operator.error.dragonscript",
+					"match": "(\\?|\\?\\?)"
 				}
 			]
 		},
