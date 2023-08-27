@@ -140,7 +140,7 @@
 				{
 					"comment": "These types have very special meanings",
 					"name": "support.type.dragonscript",
-					"match": "\\b(any|none|never|error)\\b"
+					"match": "\\b(any|none|never|error|fn)\\b"
 				}
 			]
 		},
