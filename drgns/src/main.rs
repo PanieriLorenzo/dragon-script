@@ -7,8 +7,10 @@ use std::{
     sync::{OnceLock, OnceState, RwLock},
 };
 
+mod data;
 mod error_handler;
 mod interner;
+mod lexer;
 
 // TODO: overwrite built-in error handling for consistent style
 #[derive(Parser, Debug)]
