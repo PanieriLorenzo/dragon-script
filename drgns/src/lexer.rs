@@ -5,7 +5,7 @@ use std::{
 
 use append_only_vec::AppendOnlyVec;
 
-use crate::{data, interner::Span};
+use crate::{arena::Span, data};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {

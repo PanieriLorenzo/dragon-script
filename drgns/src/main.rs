@@ -1,15 +1,15 @@
+use arena::intern;
 use clap::{Error, Parser};
 use error_handler as eh;
-use interner::intern_raw;
 use std::{
     io::Write,
     process::{exit, ExitCode},
     sync::{OnceLock, OnceState, RwLock},
 };
 
+mod arena;
 mod data;
 mod error_handler;
-mod interner;
 mod lexer;
 
 // TODO: overwrite built-in error handling for consistent style
@@ -74,6 +74,6 @@ fn run_prompt() -> ! {
 }
 
 fn run(source: String) {
-    let lines = intern_raw(source);
-    lines.iter().for_each(|lin| println!("{}", lin))
+    let source = intern(source);
+    print!("{}", source);
 }
