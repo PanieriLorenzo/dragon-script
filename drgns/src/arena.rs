@@ -2,7 +2,8 @@ use std::fmt::Display;
 
 use append_only_vec::AppendOnlyVec;
 
-//static STRING_ARENA: OnceLock<RwLock<Vec<String>>> = OnceLock::new();
+// TODO: move into struct when you are ready to deal with the lifetime
+//       mess... ugh...
 static STRING_ARENA: AppendOnlyVec<char> = AppendOnlyVec::new();
 
 #[derive(Clone, Copy)]
@@ -65,6 +66,28 @@ impl Reader {
             },
         }
     }
+
+    pub fn is_at_end(&self) -> bool {
+        self.current.start >= self.current.arena.len()
+    }
+
+    /// look ahead in iterator without advancing
+    pub fn peek(&self) -> Option<char> {
+        if self.is_at_end() {
+            None
+        } else {
+            Some(self.current.arena[self.current.start])
+        }
+    }
+
+    /// look ahead 2 chars without advancing
+    pub fn peek2(&self) -> Option<char> {
+        if self.current.start + 1 >= self.current.arena.len() {
+            None
+        } else {
+            Some(self.current.arena[self.current.start + 1])
+        }
+    }
 }
 
 impl Iterator for Reader {
@@ -72,9 +95,9 @@ impl Iterator for Reader {
 
     /// get next char, ignores the length of the window and leaves it unchanged
     fn next(&mut self) -> Option<Self::Item> {
-        let ret = Some(self.current.arena[self.current.start]);
+        let ret = self.peek()?;
         self.current.start += 1;
-        ret
+        Some(ret)
     }
 }
 

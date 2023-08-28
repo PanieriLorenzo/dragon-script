@@ -5,7 +5,10 @@ use std::{
 
 use append_only_vec::AppendOnlyVec;
 
-use crate::{arena::Span, data};
+use crate::{
+    arena::{Reader, Span},
+    data,
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
@@ -13,8 +16,8 @@ pub enum TokenType {
     SingleQuote,
     DoubleQuote,
     Caret,
-    LeftParent,
-    RightParent,
+    LeftParen,
+    RightParen,
     LeftBracket,
     RightBracket,
     LeftBrace,
@@ -88,7 +91,7 @@ pub enum TokenType {
     Lxor,
     Move,
     Mut,
-    None,
+    None_,
     Not,
     Obj,
     Or,
@@ -107,6 +110,7 @@ pub enum TokenType {
     Unknown,
 
     // a "fake" character emitted at the end of the stream
+    // TODO: this is unused? just use Option<Token>::None
     EOF,
 }
 
@@ -136,7 +140,7 @@ fn init_keywords() {
                 ("lxor", TokenType::Lxor),
                 ("move", TokenType::Move),
                 ("mut", TokenType::Mut),
-                ("none", TokenType::None),
+                ("none", TokenType::None_),
                 ("not", TokenType::Not),
                 ("obj", TokenType::Obj),
                 ("or", TokenType::Or),
@@ -190,8 +194,88 @@ impl ToString for Token {
 //     line: usize,
 // }
 
-struct LexerContext {
-    tokens: Vec<Token>,
-    start: Span,
-    current: Span,
+pub struct Lexer {
+    reader: Reader,
+}
+
+impl Lexer {
+    pub fn new(reader: Reader) -> Self {
+        Self { reader }
+    }
+
+    /// parses all tokens that start with +
+    fn ambiguous_plus(&mut self) -> TokenType {
+        use crate::lexer::TokenType::*;
+        match (self.reader.peek(), self.reader.peek2()) {
+            (Some('+'), Some('=')) => {
+                self.reader.next();
+                self.reader.next();
+                PlusPlusEquals
+            }
+            (Some('+'), _) => {
+                self.reader.next();
+                PlusPlus
+            }
+            (Some('='), _) => {
+                self.reader.next();
+                PlusEquals
+            }
+            _ => Plus,
+        }
+    }
+
+    /// parses all tokens that start with *
+    fn ambiguous_mul(&mut self) -> TokenType {
+        use crate::lexer::TokenType::*;
+        match (self.reader.peek(), self.reader.peek2()) {
+            (Some('*'), Some('=')) => {
+                self.reader.next();
+                self.reader.next();
+                MulMulEquals
+            }
+            (Some('*'), _) => {
+                self.reader.next();
+                MulMul
+            }
+            (Some('='), _) => {
+                self.reader.next();
+                MulEquals
+            }
+            _ => Mul,
+        }
+    }
+}
+
+impl Iterator for Lexer {
+    type Item = Token;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        use TokenType::*;
+        let c = self.reader.next()?;
+        let token_type = match c {
+            // match unambiguously single-character okens
+            '\'' => SingleQuote,
+            '"' => DoubleQuote,
+            '^' => Caret,
+            '(' => LeftParen,
+            ')' => RightParen,
+            '[' => LeftBracket,
+            ']' => RightBracket,
+            '{' => LeftBrace,
+            '}' => RightBrace,
+            ',' => Comma,
+            ';' => Semicolon,
+            '|' => Pipe,
+
+            // match one or more character tokens
+            '+' => self.ambiguous_plus(),
+            '*' => self.ambiguous_mul(),
+            _ => todo!("{}", c),
+        };
+        return Some(Token {
+            token_type,
+            lexeme: self.reader.current,
+            literal: None,
+        });
+    }
 }

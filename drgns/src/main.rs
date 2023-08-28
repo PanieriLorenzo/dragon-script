@@ -7,6 +7,8 @@ use std::{
     sync::{OnceLock, OnceState, RwLock},
 };
 
+use crate::lexer::Lexer;
+
 mod arena;
 mod data;
 mod error_handler;
@@ -25,19 +27,20 @@ struct Args {
 
 fn main() -> ! {
     let args = Args::parse();
+    let mut lx = Lexer::new(arena::Reader::new());
 
     // once main is done parsing cli arguments, we move execution to the
     // appropriate runners. These runners never return.
     if let Some(path) = args.input.as_deref() {
         // run in batch mode
-        run_file(path);
+        run_file(&mut lx, path);
     } else {
         // run in REPL mode
-        run_prompt();
+        run_prompt(&mut lx);
     }
 }
 
-fn run_file(path: &str) -> ! {
+fn run_file(lx: &mut Lexer, path: &str) -> ! {
     // define an error handler here for convenience
     let errexit = || -> ! {
         std::process::exit(eh::display_errors());
@@ -53,11 +56,11 @@ fn run_file(path: &str) -> ! {
             _ => eh::fatal_unreachable(),
         },
     };
-    run(source);
+    run(lx, source);
     errexit();
 }
 
-fn run_prompt() -> ! {
+fn run_prompt(lx: &mut Lexer) -> ! {
     loop {
         // TODO: fancy prompt
         print!("> ");
@@ -68,12 +71,14 @@ fn run_prompt() -> ! {
         std::io::stdin().read_line(&mut input).unwrap_or_else(|_| {
             eh::fatal_io_generic("stdout cannot be read");
         });
-        run(input);
+        run(lx, input);
         eh::display_errors();
     }
 }
 
-fn run(source: String) {
-    let source = intern(source);
-    print!("{}", source);
+fn run(lx: &mut Lexer, source: String) {
+    arena::intern(source);
+    println!("{:#?}", lx.next().unwrap().to_string());
+    // discard newline
+    lx.next();
 }
