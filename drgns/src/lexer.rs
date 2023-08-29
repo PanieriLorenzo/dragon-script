@@ -47,7 +47,7 @@ pub enum TokenType {
     DoubleLess,
     Greater,
     GreaterEquals,
-    DoubleGreaterEquals,
+    DoubleGreater,
     Colon,
     ColonColon,
     ColonEquals,
@@ -244,6 +244,155 @@ impl Lexer {
             _ => Mul,
         }
     }
+
+    /// parses all tokens that start with -
+    fn ambiguous_minus(&mut self) -> TokenType {
+        use crate::lexer::TokenType::*;
+        match (self.reader.peek(), self.reader.peek2()) {
+            (Some('='), _) => {
+                self.reader.next();
+                MinusEquals
+            }
+            (Some('>'), _) => {
+                self.reader.next();
+                Arrow
+            }
+            _ => Minus,
+        }
+    }
+
+    /// parses all tokens that start with a /
+    fn ambiguous_slash(&mut self) -> TokenType {
+        use crate::lexer::TokenType::*;
+        match (self.reader.peek(), self.reader.peek2()) {
+            (Some('='), _) => {
+                self.reader.next();
+                DivEquals
+            }
+            // comment
+            (Some('/'), _) => {
+                while self.reader.peek() != Some('\n') && self.reader.peek().is_some() {
+                    self.reader.next();
+                }
+                Ignore
+            }
+            _ => Div,
+        }
+    }
+
+    /// parses all tokens that start with a %
+    fn ambiguous_mod(&mut self) -> TokenType {
+        use crate::lexer::TokenType::*;
+        match (self.reader.peek(), self.reader.peek2()) {
+            (Some('='), _) => {
+                self.reader.next();
+                ModEquals
+            }
+            _ => Mod,
+        }
+    }
+
+    /// parses all tokens that start with <
+    fn ambiguous_less(&mut self) -> TokenType {
+        use crate::lexer::TokenType::*;
+        match (self.reader.peek(), self.reader.peek2()) {
+            (Some('<'), _) => {
+                self.reader.next();
+                DoubleLess
+            }
+            (Some('='), _) => {
+                self.reader.next();
+                LessEquals
+            }
+            _ => Less,
+        }
+    }
+
+    /// parses all tokens that start with >
+    fn ambiguous_greater(&mut self) -> TokenType {
+        use crate::lexer::TokenType::*;
+        match (self.reader.peek(), self.reader.peek2()) {
+            (Some('>'), _) => {
+                self.reader.next();
+                DoubleGreater
+            }
+            (Some('='), _) => {
+                self.reader.next();
+                GreaterEquals
+            }
+            _ => Greater,
+        }
+    }
+
+    /// parses all tokens that start with :
+    fn ambiguous_colon(&mut self) -> TokenType {
+        use crate::lexer::TokenType::*;
+        match (self.reader.peek(), self.reader.peek2()) {
+            (Some(':'), _) => {
+                self.reader.next();
+                ColonColon
+            }
+            (Some('='), _) => {
+                self.reader.next();
+                ColonEquals
+            }
+            _ => Colon,
+        }
+    }
+
+    /// parses all tokens that start with a !
+    fn ambiguous_bang(&mut self) -> TokenType {
+        use crate::lexer::TokenType::*;
+        match (self.reader.peek(), self.reader.peek2()) {
+            (Some('='), _) => {
+                self.reader.next();
+                BangEquals
+            }
+            _ => Bang,
+        }
+    }
+
+    /// parses all tokens that start with ?
+    fn ambiguous_question(&mut self) -> TokenType {
+        use crate::lexer::TokenType::*;
+        match (self.reader.peek(), self.reader.peek2()) {
+            (Some('?'), Some('=')) => {
+                self.reader.next();
+                self.reader.next();
+                DoubleQuestionEqual
+            }
+            (Some('?'), _) => {
+                self.reader.next();
+                DoubleQuestion
+            }
+            _ => Question,
+        }
+    }
+
+    /// parses all tokens that start with a =
+    fn ambiguous_equal(&mut self) -> TokenType {
+        use crate::lexer::TokenType::*;
+        match (self.reader.peek(), self.reader.peek2()) {
+            (Some('='), _) => {
+                self.reader.next();
+                EqualEqual
+            }
+            _ => Equal,
+        }
+    }
+
+    /// parses all tokens that start with a .
+    fn ambiguous_dot(&mut self) -> TokenType {
+        use crate::lexer::TokenType::*;
+        match (self.reader.peek(), self.reader.peek2()) {
+            (Some('.'), Some('.')) => {
+                self.reader.next();
+                self.reader.next();
+                Ellipses
+            }
+            _ => Dot,
+        }
+    }
 }
 
 impl Iterator for Lexer {
@@ -270,6 +419,18 @@ impl Iterator for Lexer {
             // match one or more character tokens
             '+' => self.ambiguous_plus(),
             '*' => self.ambiguous_mul(),
+            '-' => self.ambiguous_minus(),
+            '%' => self.ambiguous_mod(),
+            '<' => self.ambiguous_less(),
+            '>' => self.ambiguous_greater(),
+            ':' => self.ambiguous_colon(),
+            '!' => self.ambiguous_bang(),
+            '?' => self.ambiguous_question(),
+            '=' => self.ambiguous_equal(),
+            '.' => self.ambiguous_dot(),
+
+            // includes comment vvv
+            '/' => self.ambiguous_slash(),
             _ => todo!("{}", c),
         };
         return Some(Token {

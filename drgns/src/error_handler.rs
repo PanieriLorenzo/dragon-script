@@ -31,6 +31,15 @@ use std::{
     },
 };
 
+#[macro_export]
+macro_rules! assert_pre_condition {
+    ($condition:expr) => {
+        if !$condition {
+            $crate::error_handler::fatal_pre_condition(stringify!($condition))
+        }
+    };
+}
+
 /// Print the errors collected so far and returns the most appropriate UNIX
 /// error code.
 pub fn display_errors() -> i32 {
@@ -60,6 +69,26 @@ pub fn display_errors() -> i32 {
 pub fn err_generic(msg: impl std::fmt::Debug) {
     const CODE: u32 = 00001;
     push_error(CODE, msg);
+}
+
+pub fn fatal_assertion(msg: impl std::fmt::Debug) {
+    const CODE: u32 = 00002;
+    crash_and_burn(CODE, format!("assertion failed: {:#?}", msg));
+}
+
+pub fn fatal_pre_condition(msg: impl std::fmt::Debug) {
+    const CODE: u32 = 00003;
+    crash_and_burn(CODE, format!("pre condition violation: {:#?}", msg))
+}
+
+pub fn fatal_post_condition(msg: impl std::fmt::Debug) {
+    const CODE: u32 = 00004;
+    crash_and_burn(CODE, format!("post condition violation: {:#?}", msg))
+}
+
+pub fn fatal_invariant(msg: impl std::fmt::Debug) {
+    const CODE: u32 = 00005;
+    crash_and_burn(CODE, format!("invariant violation: {:#?}", msg))
 }
 
 pub fn fatal_io_generic(msg: impl std::fmt::Debug) -> ! {

@@ -21,6 +21,26 @@ impl Span {
             .take(self.length)
             .collect()
     }
+
+    fn end(&self) -> usize {
+        self.start + self.length
+    }
+
+    /// get a char from the span given index
+    pub fn get(&self, i: usize) -> char {
+        // pre-condition: index in range
+        crate::assert_pre_condition!(i < self.length);
+
+        self.arena[i - self.start]
+    }
+
+    /// get a char from the span indexing from the end
+    pub fn get_back(&self, i: usize) -> char {
+        // pre-condition: index in range
+        crate::assert_pre_condition!(self.start + self.length - i < self.length);
+
+        self.arena[self.start + self.length - 1]
+    }
 }
 
 impl Display for Span {
@@ -76,17 +96,35 @@ impl Reader {
         if self.is_at_end() {
             None
         } else {
-            Some(self.current.arena[self.current.start])
+            Some(self.current.arena[self.head_idx()])
         }
     }
 
     /// look ahead 2 chars without advancing
     pub fn peek2(&self) -> Option<char> {
-        if self.current.start + 1 >= self.current.arena.len() {
+        if self.head_idx() + 1 >= self.current.arena.len() {
             None
         } else {
-            Some(self.current.arena[self.current.start + 1])
+            Some(self.current.arena[self.head_idx() + 1])
         }
+    }
+
+    pub fn advance_head(&mut self) -> Option<char> {
+        let ret = self.peek()?;
+        self.current.length += 1;
+        Some(ret)
+    }
+
+    pub fn advance_tail(&mut self) -> Span {
+        let ret = self.current;
+        self.current.start = self.head_idx();
+        self.current.length = 0;
+        ret
+    }
+
+    /// get the index of the current char
+    fn head_idx(&self) -> usize {
+        self.current.start + self.current.length
     }
 }
 
@@ -95,9 +133,7 @@ impl Iterator for Reader {
 
     /// get next char, ignores the length of the window and leaves it unchanged
     fn next(&mut self) -> Option<Self::Item> {
-        let ret = self.peek()?;
-        self.current.start += 1;
-        Some(ret)
+        self.advance_head()
     }
 }
 
