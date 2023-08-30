@@ -31,6 +31,8 @@ use std::{
     },
 };
 
+use crate::arena::Span;
+
 #[macro_export]
 macro_rules! assert_pre_condition {
     ($condition:expr) => {
@@ -99,6 +101,11 @@ pub fn fatal_io_generic(msg: impl std::fmt::Debug) -> ! {
 pub fn err_io_not_found(path: &str) {
     const CODE: u32 = 01001;
     push_error(CODE, "path ".to_owned() + path + " does not exist");
+}
+
+pub fn err_int_too_big() {
+    const CODE: u32 = 02001;
+    push_error(CODE, "int literal is too large (max is 2^47)");
 }
 
 /// Same as `err_generic` but fatal (doesn't attempt to recover).

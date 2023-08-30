@@ -1,9 +1,11 @@
 use std::{
+    cell::OnceCell,
     collections::HashMap,
     sync::{OnceLock, RwLock},
 };
 
 use append_only_vec::AppendOnlyVec;
+use clap::error;
 
 use crate::{
     arena::{Reader, Span},
@@ -11,6 +13,8 @@ use crate::{
     data::PrimitiveValue,
     error_handler,
 };
+
+use regex::Regex;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
@@ -177,7 +181,7 @@ pub struct Token {
 impl ToString for Token {
     fn to_string(&self) -> String {
         return format!(
-            "{} {} {}",
+            "({}, {}, {})",
             self.token_type,
             self.lexeme,
             match &self.literal {
@@ -412,43 +416,35 @@ impl Lexer {
             is_float = true;
             // consume the "."
             self.reader.next();
+
             while self.reader.peek().is_some_and(is_digit_or_sep) {
                 self.reader.next();
             }
+
+            // TODO: look for scientific notation
         }
 
         if is_float {
-            (
-                TokenType::FloatLit,
-                Some(PrimitiveValue::Float(
-                    self.reader
-                        .current
-                        .to_string()
-                        .replace("_", "")
-                        .parse()
-                        .unwrap_or_else(|_| {
-                            error_handler::fatal_generic(
-                                "compiler couldn't parse float literal value",
-                            )
-                        }),
-                )),
-            )
+            let val = self
+                .reader
+                .current
+                .to_string()
+                .replace("_", "")
+                .parse()
+                .unwrap_or_else(|_| error_handler::fatal_unreachable());
+            (TokenType::FloatLit, Some(PrimitiveValue::Float(val)))
         } else {
-            (
-                TokenType::IntLit,
-                Some(PrimitiveValue::Int(
-                    self.reader
-                        .current
-                        .to_string()
-                        .replace("_", "")
-                        .parse()
-                        .unwrap_or_else(|_| {
-                            error_handler::fatal_generic(
-                                "compiler couldn't parse int literal value",
-                            )
-                        }),
-                )),
-            )
+            let val = self
+                .reader
+                .current
+                .to_string()
+                .replace("_", "")
+                .parse()
+                .unwrap_or_else(|_| {
+                    error_handler::err_int_too_big();
+                    0
+                });
+            (TokenType::IntLit, Some(PrimitiveValue::Int(val)))
         }
     }
 }
