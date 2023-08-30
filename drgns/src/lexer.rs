@@ -486,10 +486,10 @@ impl Iterator for Lexer {
 
             _ => error_handler::fatal_unreachable(),
         };
-        return Some(Token {
+        Some(Token {
             token_type,
-            lexeme: self.reader.current,
+            lexeme: self.reader.advance_tail(),
             literal: None,
-        });
+        })
     }
 }
