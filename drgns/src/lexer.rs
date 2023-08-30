@@ -421,18 +421,32 @@ impl Lexer {
             (
                 TokenType::FloatLit,
                 Some(PrimitiveValue::Float(
-                    self.reader.current.to_string().parse().unwrap_or_else(|_| {
-                        error_handler::fatal_generic("compiler couldn't parse float literal value")
-                    }),
+                    self.reader
+                        .current
+                        .to_string()
+                        .replace("_", "")
+                        .parse()
+                        .unwrap_or_else(|_| {
+                            error_handler::fatal_generic(
+                                "compiler couldn't parse float literal value",
+                            )
+                        }),
                 )),
             )
         } else {
             (
                 TokenType::IntLit,
                 Some(PrimitiveValue::Int(
-                    self.reader.current.to_string().parse().unwrap_or_else(|_| {
-                        error_handler::fatal_generic("compiler couldn't parse int literal value")
-                    }),
+                    self.reader
+                        .current
+                        .to_string()
+                        .replace("_", "")
+                        .parse()
+                        .unwrap_or_else(|_| {
+                            error_handler::fatal_generic(
+                                "compiler couldn't parse int literal value",
+                            )
+                        }),
                 )),
             )
         }
