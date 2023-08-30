@@ -14,9 +14,7 @@ use crate::{
     error_handler,
 };
 
-use regex::Regex;
-
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenType {
     // unambiguously single-character tokens
     SingleQuote,
@@ -122,7 +120,7 @@ pub enum TokenType {
 
 static KEYWORDS: OnceLock<RwLock<HashMap<&'static str, TokenType>>> = OnceLock::new();
 
-fn init_keywords() {
+fn init_keywords() -> &'static RwLock<HashMap<&'static str, TokenType>> {
     KEYWORDS.get_or_init(|| {
         RwLock::new(
             [
@@ -162,7 +160,7 @@ fn init_keywords() {
             .cloned()
             .collect(),
         )
-    });
+    })
 }
 
 impl std::fmt::Display for TokenType {
@@ -447,6 +445,27 @@ impl Lexer {
             (TokenType::IntLit, Some(PrimitiveValue::Int(val)))
         }
     }
+
+    fn lex_identifier(&mut self) -> (TokenType, Option<PrimitiveValue>) {
+        while self
+            .reader
+            .peek()
+            .is_some_and(|c| c.is_ascii_alphanumeric() || c == '_')
+        {
+            self.reader.next();
+        }
+
+        let text = self.reader.current.to_string();
+        if let Some(type_) = init_keywords()
+            .read()
+            .unwrap_or_else(|_| error_handler::fatal_generic("poisoned lock"))
+            .get(&text as &str)
+        {
+            (*type_, None)
+        } else {
+            (TokenType::Identifier, None)
+        }
+    }
 }
 
 impl Iterator for Lexer {
@@ -493,8 +512,12 @@ impl Iterator for Lexer {
 
             // numbers
             c if c.is_ascii_digit() => self.lex_number_literal(),
+            c if c.is_ascii_alphabetic() || c == '_' => self.lex_identifier(),
 
-            _ => error_handler::fatal_unreachable(),
+            _ => {
+                error_handler::err_unexpected_character(c);
+                (Unknown, None)
+            }
         };
         Some(Token {
             token_type,
