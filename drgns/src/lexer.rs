@@ -466,6 +466,26 @@ impl Lexer {
             (TokenType::Identifier, None)
         }
     }
+
+    fn lex_raw_string(&mut self) -> (TokenType, Option<PrimitiveValue>) {
+        loop {
+            if self.reader.peek().is_none() {
+                error_handler::err_unclosed_delimiter('\'');
+                break;
+            }
+
+            if self.reader.peek().is_some_and(|c| c == '\'') {
+                self.reader.next();
+                break;
+            }
+            self.reader.next();
+        }
+
+        (
+            TokenType::RawString,
+            Some(PrimitiveValue::String(self.reader.current.to_string())),
+        )
+    }
 }
 
 impl Iterator for Lexer {
@@ -476,8 +496,8 @@ impl Iterator for Lexer {
         let c = self.reader.next()?;
         let (token_type, literal) = match c {
             // match unambiguously single-character tokens
-            '\'' => (SingleQuote, None),
-            '"' => (DoubleQuote, None),
+            // '\'' => (SingleQuote, None),
+            // '"' => (DoubleQuote, None),
             '^' => (Caret, None),
             '(' => (LeftParen, None),
             ')' => (RightParen, None),
@@ -509,6 +529,7 @@ impl Iterator for Lexer {
             ' ' | '\n' | '\r' | '\t' => (Ignore, None),
 
             // TODO: string literals, requires modal lexing
+            '\'' => self.lex_raw_string(),
 
             // numbers
             c if c.is_ascii_digit() => self.lex_number_literal(),

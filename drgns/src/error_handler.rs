@@ -105,11 +105,16 @@ pub fn err_io_not_found(path: &str) {
 
 pub fn err_unexpected_character(c: char) {
     const CODE: u32 = 02001;
-    push_error(CODE, format!("unexpected character: {}", c))
+    push_error(CODE, format!("unexpected character: {}", c));
+}
+
+pub fn err_unclosed_delimiter(c: char) {
+    const CODE: u32 = 02002;
+    push_error(CODE, format!("missing closing delimiter '{}'", c));
 }
 
 pub fn err_int_too_big() {
-    const CODE: u32 = 02002;
+    const CODE: u32 = 02003;
     push_error(CODE, "int literal is too large (max is 2^47)");
 }
 
