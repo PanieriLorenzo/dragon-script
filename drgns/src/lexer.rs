@@ -503,7 +503,7 @@ impl Iterator for Lexer {
         Some(Token {
             token_type,
             lexeme: self.reader.advance_tail(),
-            literal: None,
+            literal: literal,
         })
     }
 }
