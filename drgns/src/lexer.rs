@@ -7,7 +7,7 @@ use append_only_vec::AppendOnlyVec;
 
 use crate::{
     arena::{Reader, Span},
-    data,
+    data, error_handler,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -402,7 +402,7 @@ impl Iterator for Lexer {
         use TokenType::*;
         let c = self.reader.next()?;
         let token_type = match c {
-            // match unambiguously single-character okens
+            // match unambiguously single-character tokens
             '\'' => SingleQuote,
             '"' => DoubleQuote,
             '^' => Caret,
@@ -431,7 +431,12 @@ impl Iterator for Lexer {
 
             // includes comment vvv
             '/' => self.ambiguous_slash(),
-            _ => todo!("{}", c),
+
+            // ignore whitespace
+            ' ' | '\n' | '\r' | '\t' => Ignore,
+
+            // TODO: string literals, requires modal lexing
+            _ => error_handler::fatal_unreachable(),
         };
         return Some(Token {
             token_type,
