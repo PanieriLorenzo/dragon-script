@@ -14,7 +14,7 @@ pub struct Span {
 }
 
 impl Span {
-    fn to_string(&self) -> String {
+    pub fn to_string(&self) -> String {
         self.arena
             .iter()
             .skip(self.start)

@@ -7,7 +7,9 @@ use append_only_vec::AppendOnlyVec;
 
 use crate::{
     arena::{Reader, Span},
-    data, error_handler,
+    data,
+    data::PrimitiveValue,
+    error_handler,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -67,8 +69,8 @@ pub enum TokenType {
     Symbol,
     String,
     RawString,
-    Integer,
-    Float,
+    IntLit,
+    FloatLit,
 
     // Keywords
     And,
@@ -77,7 +79,7 @@ pub enum TokenType {
     Continue,
     Copy,
     False,
-    Float_,
+    Float,
     For,
     Function,
     Int,
@@ -126,7 +128,7 @@ fn init_keywords() {
                 ("continue", TokenType::Continue),
                 ("copy", TokenType::Copy),
                 ("false", TokenType::False),
-                ("float", TokenType::Float_),
+                ("float", TokenType::Float),
                 ("for", TokenType::For),
                 ("function", TokenType::Function),
                 ("int", TokenType::Int),
@@ -204,193 +206,235 @@ impl Lexer {
     }
 
     /// parses all tokens that start with +
-    fn ambiguous_plus(&mut self) -> TokenType {
+    fn ambiguous_plus(&mut self) -> (TokenType, Option<PrimitiveValue>) {
         use crate::lexer::TokenType::*;
         match (self.reader.peek(), self.reader.peek2()) {
             (Some('+'), Some('=')) => {
                 self.reader.next();
                 self.reader.next();
-                PlusPlusEquals
+                (PlusPlusEquals, None)
             }
             (Some('+'), _) => {
                 self.reader.next();
-                PlusPlus
+                (PlusPlus, None)
             }
             (Some('='), _) => {
                 self.reader.next();
-                PlusEquals
+                (PlusEquals, None)
             }
-            _ => Plus,
+            _ => (Plus, None),
         }
     }
 
     /// parses all tokens that start with *
-    fn ambiguous_mul(&mut self) -> TokenType {
+    fn ambiguous_mul(&mut self) -> (TokenType, Option<PrimitiveValue>) {
         use crate::lexer::TokenType::*;
         match (self.reader.peek(), self.reader.peek2()) {
             (Some('*'), Some('=')) => {
                 self.reader.next();
                 self.reader.next();
-                MulMulEquals
+                (MulMulEquals, None)
             }
             (Some('*'), _) => {
                 self.reader.next();
-                MulMul
+                (MulMul, None)
             }
             (Some('='), _) => {
                 self.reader.next();
-                MulEquals
+                (MulEquals, None)
             }
-            _ => Mul,
+            _ => (Mul, None),
         }
     }
 
     /// parses all tokens that start with -
-    fn ambiguous_minus(&mut self) -> TokenType {
+    fn ambiguous_minus(&mut self) -> (TokenType, Option<PrimitiveValue>) {
         use crate::lexer::TokenType::*;
         match (self.reader.peek(), self.reader.peek2()) {
             (Some('='), _) => {
                 self.reader.next();
-                MinusEquals
+                (MinusEquals, None)
             }
             (Some('>'), _) => {
                 self.reader.next();
-                Arrow
+                (Arrow, None)
             }
-            _ => Minus,
+            _ => (Minus, None),
         }
     }
 
     /// parses all tokens that start with a /
-    fn ambiguous_slash(&mut self) -> TokenType {
+    fn ambiguous_slash(&mut self) -> (TokenType, Option<PrimitiveValue>) {
         use crate::lexer::TokenType::*;
         match (self.reader.peek(), self.reader.peek2()) {
             (Some('='), _) => {
                 self.reader.next();
-                DivEquals
+                (DivEquals, None)
             }
             // comment
             (Some('/'), _) => {
                 while self.reader.peek() != Some('\n') && self.reader.peek().is_some() {
                     self.reader.next();
                 }
-                Ignore
+                (Ignore, None)
             }
-            _ => Div,
+            _ => (Div, None),
         }
     }
 
     /// parses all tokens that start with a %
-    fn ambiguous_mod(&mut self) -> TokenType {
+    fn ambiguous_mod(&mut self) -> (TokenType, Option<PrimitiveValue>) {
         use crate::lexer::TokenType::*;
         match (self.reader.peek(), self.reader.peek2()) {
             (Some('='), _) => {
                 self.reader.next();
-                ModEquals
+                (ModEquals, None)
             }
-            _ => Mod,
+            _ => (Mod, None),
         }
     }
 
     /// parses all tokens that start with <
-    fn ambiguous_less(&mut self) -> TokenType {
+    fn ambiguous_less(&mut self) -> (TokenType, Option<PrimitiveValue>) {
         use crate::lexer::TokenType::*;
         match (self.reader.peek(), self.reader.peek2()) {
             (Some('<'), _) => {
                 self.reader.next();
-                DoubleLess
+                (DoubleLess, None)
             }
             (Some('='), _) => {
                 self.reader.next();
-                LessEquals
+                (LessEquals, None)
             }
-            _ => Less,
+            _ => (Less, None),
         }
     }
 
     /// parses all tokens that start with >
-    fn ambiguous_greater(&mut self) -> TokenType {
+    fn ambiguous_greater(&mut self) -> (TokenType, Option<PrimitiveValue>) {
         use crate::lexer::TokenType::*;
         match (self.reader.peek(), self.reader.peek2()) {
             (Some('>'), _) => {
                 self.reader.next();
-                DoubleGreater
+                (DoubleGreater, None)
             }
             (Some('='), _) => {
                 self.reader.next();
-                GreaterEquals
+                (GreaterEquals, None)
             }
-            _ => Greater,
+            _ => (Greater, None),
         }
     }
 
     /// parses all tokens that start with :
-    fn ambiguous_colon(&mut self) -> TokenType {
+    fn ambiguous_colon(&mut self) -> (TokenType, Option<PrimitiveValue>) {
         use crate::lexer::TokenType::*;
         match (self.reader.peek(), self.reader.peek2()) {
             (Some(':'), _) => {
                 self.reader.next();
-                ColonColon
+                (ColonColon, None)
             }
             (Some('='), _) => {
                 self.reader.next();
-                ColonEquals
+                (ColonEquals, None)
             }
-            _ => Colon,
+            _ => (Colon, None),
         }
     }
 
     /// parses all tokens that start with a !
-    fn ambiguous_bang(&mut self) -> TokenType {
+    fn ambiguous_bang(&mut self) -> (TokenType, Option<PrimitiveValue>) {
         use crate::lexer::TokenType::*;
         match (self.reader.peek(), self.reader.peek2()) {
             (Some('='), _) => {
                 self.reader.next();
-                BangEquals
+                (BangEquals, None)
             }
-            _ => Bang,
+            _ => (Bang, None),
         }
     }
 
     /// parses all tokens that start with ?
-    fn ambiguous_question(&mut self) -> TokenType {
+    fn ambiguous_question(&mut self) -> (TokenType, Option<PrimitiveValue>) {
         use crate::lexer::TokenType::*;
         match (self.reader.peek(), self.reader.peek2()) {
             (Some('?'), Some('=')) => {
                 self.reader.next();
                 self.reader.next();
-                DoubleQuestionEqual
+                (DoubleQuestionEqual, None)
             }
             (Some('?'), _) => {
                 self.reader.next();
-                DoubleQuestion
+                (DoubleQuestion, None)
             }
-            _ => Question,
+            _ => (Question, None),
         }
     }
 
     /// parses all tokens that start with a =
-    fn ambiguous_equal(&mut self) -> TokenType {
+    fn ambiguous_equal(&mut self) -> (TokenType, Option<PrimitiveValue>) {
         use crate::lexer::TokenType::*;
         match (self.reader.peek(), self.reader.peek2()) {
             (Some('='), _) => {
                 self.reader.next();
-                EqualEqual
+                (EqualEqual, None)
             }
-            _ => Equal,
+            _ => (Equal, None),
         }
     }
 
     /// parses all tokens that start with a .
-    fn ambiguous_dot(&mut self) -> TokenType {
+    fn ambiguous_dot(&mut self) -> (TokenType, Option<PrimitiveValue>) {
         use crate::lexer::TokenType::*;
         match (self.reader.peek(), self.reader.peek2()) {
             (Some('.'), Some('.')) => {
                 self.reader.next();
                 self.reader.next();
-                Ellipses
+                (Ellipses, None)
             }
-            _ => Dot,
+            _ => (Dot, None),
+        }
+    }
+
+    fn lex_number_literal(&mut self) -> (TokenType, Option<PrimitiveValue>) {
+        let mut is_float = false;
+
+        // helper for matching digit or digit separator, e.g. 123_456_789
+        let is_digit_or_sep = |c: char| c.is_ascii_digit() || c == '_';
+
+        // match integer part
+        while self.reader.peek().is_some_and(is_digit_or_sep) {
+            self.reader.next();
+        }
+
+        // look for a fractional part
+        if self.reader.peek() == Some('.') && self.reader.peek2().is_some_and(is_digit_or_sep) {
+            is_float = true;
+            // consume the "."
+            self.reader.next();
+            while self.reader.peek().is_some_and(is_digit_or_sep) {
+                self.reader.next();
+            }
+        }
+
+        if is_float {
+            (
+                TokenType::FloatLit,
+                Some(PrimitiveValue::Float(
+                    self.reader.current.to_string().parse().unwrap_or_else(|_| {
+                        error_handler::fatal_generic("compiler couldn't parse float literal value")
+                    }),
+                )),
+            )
+        } else {
+            (
+                TokenType::IntLit,
+                Some(PrimitiveValue::Int(
+                    self.reader.current.to_string().parse().unwrap_or_else(|_| {
+                        error_handler::fatal_generic("compiler couldn't parse int literal value")
+                    }),
+                )),
+            )
         }
     }
 }
@@ -401,20 +445,20 @@ impl Iterator for Lexer {
     fn next(&mut self) -> Option<Self::Item> {
         use TokenType::*;
         let c = self.reader.next()?;
-        let token_type = match c {
+        let (token_type, literal) = match c {
             // match unambiguously single-character tokens
-            '\'' => SingleQuote,
-            '"' => DoubleQuote,
-            '^' => Caret,
-            '(' => LeftParen,
-            ')' => RightParen,
-            '[' => LeftBracket,
-            ']' => RightBracket,
-            '{' => LeftBrace,
-            '}' => RightBrace,
-            ',' => Comma,
-            ';' => Semicolon,
-            '|' => Pipe,
+            '\'' => (SingleQuote, None),
+            '"' => (DoubleQuote, None),
+            '^' => (Caret, None),
+            '(' => (LeftParen, None),
+            ')' => (RightParen, None),
+            '[' => (LeftBracket, None),
+            ']' => (RightBracket, None),
+            '{' => (LeftBrace, None),
+            '}' => (RightBrace, None),
+            ',' => (Comma, None),
+            ';' => (Semicolon, None),
+            '|' => (Pipe, None),
 
             // match one or more character tokens
             '+' => self.ambiguous_plus(),
@@ -433,9 +477,13 @@ impl Iterator for Lexer {
             '/' => self.ambiguous_slash(),
 
             // ignore whitespace
-            ' ' | '\n' | '\r' | '\t' => Ignore,
+            ' ' | '\n' | '\r' | '\t' => (Ignore, None),
 
             // TODO: string literals, requires modal lexing
+
+            // numbers
+            c if c.is_ascii_digit() => self.lex_number_literal(),
+
             _ => error_handler::fatal_unreachable(),
         };
         return Some(Token {

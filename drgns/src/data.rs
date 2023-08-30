@@ -6,7 +6,7 @@ pub enum PrimitiveValue {
     True,
     False,
     Int(u64),
-    Float_(f64),
+    Float(f64),
     String(String),
 }
 
