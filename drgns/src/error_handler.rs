@@ -24,6 +24,7 @@
 //!          are the bad ones, they should never occur.
 
 use std::{
+    backtrace::Backtrace,
     process::exit,
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -158,6 +159,7 @@ fn push_error(code: u32, msg: impl std::fmt::Debug) {
 
 fn crash_and_burn(code: u32, msg: impl std::fmt::Debug) -> ! {
     const FATAL_COPYPASTA: &str = concat!(
+        "Ooops, that was unespected :/\n\n",
         "The compiler encountered an internal fatal error, from which it",
         "cannot safely recover. This is most likely a bug in the compiler, ",
         "please reach out to the developer by reporting an issue on github:\n",
@@ -168,5 +170,7 @@ fn crash_and_burn(code: u32, msg: impl std::fmt::Debug) -> ! {
     HAS_ERROR.store(true, Ordering::Relaxed);
 
     println!("[F{:0>5}] {} {:#?}", code, FATAL_COPYPASTA, msg);
+    println!();
+    println!("{}", Backtrace::force_capture());
     panic!("{:#?}", msg);
 }
