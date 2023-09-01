@@ -6,6 +6,7 @@ use std::{
 
 use append_only_vec::AppendOnlyVec;
 use clap::error;
+use smallvec::SmallVec;
 
 use crate::{
     arena::{Reader, Span},
@@ -26,6 +27,7 @@ pub enum TokenType {
     RightBracket,
     LeftBrace,
     RightBrace,
+    CloseInterpolation,
     Comma,
     Semicolon,
     Pipe,
@@ -69,7 +71,7 @@ pub enum TokenType {
     // literals
     Identifier,
     Symbol,
-    String,
+    StringPart,
     RawString,
     IntLit,
     FloatLit,
@@ -198,13 +200,26 @@ impl ToString for Token {
 //     line: usize,
 // }
 
+enum LexerMode {
+    Normal,
+    String,
+}
+
 pub struct Lexer {
     reader: Reader,
+    // the idea of using SmallVec is that in 99.99% of cases, you'll never nest
+    // your string interpolations more than 32 layers. Using SmallStack is easier
+    // than implementing my own stack-allocated stack with safe overflows. One
+    // less error to keep track of.
+    mode_stack: SmallVec<[LexerMode; 32]>,
 }
 
 impl Lexer {
     pub fn new(reader: Reader) -> Self {
-        Self { reader }
+        Self {
+            reader,
+            mode_stack: vec![LexerMode::Normal].into(),
+        }
     }
 
     /// parses all tokens that start with +
@@ -398,6 +413,10 @@ impl Lexer {
         }
     }
 
+    fn ambiguous_dollar(&mut self) -> (TokenType, Option<PrimitiveValue>) {
+        todo!()
+    }
+
     fn lex_number_literal(&mut self) -> (TokenType, Option<PrimitiveValue>) {
         let mut is_float = false;
 
@@ -486,12 +505,23 @@ impl Lexer {
             Some(PrimitiveValue::String(self.reader.current.to_string())),
         )
     }
-}
 
-impl Iterator for Lexer {
-    type Item = Token;
+    fn lex_string_part(&mut self) -> (TokenType, Option<PrimitiveValue>) {
+        // immediately handles escaped characters, instead of using separate tokens
+        todo!()
+    }
 
-    fn next(&mut self) -> Option<Self::Item> {
+    fn string_mode_next(&mut self) -> Option<Token> {
+        use TokenType as T;
+        let c = self.reader.next()?;
+        let (token_type, literal) = match c {
+            '$' => self.ambiguous_dollar(),
+            _ => self.lex_string_part(),
+        };
+        todo!()
+    }
+
+    fn normal_mode_next(&mut self) -> Option<Token> {
         use TokenType as T;
         let c = self.reader.next()?;
         let (token_type, literal) = match c {
@@ -528,8 +558,14 @@ impl Iterator for Lexer {
             // ignore whitespace
             ' ' | '\n' | '\r' | '\t' => (T::Ignore, None),
 
-            // TODO: string literals, requires modal lexing
+            // raw tring literals
             '\'' => self.lex_raw_string(),
+
+            // string literals, require modal lexing
+            '\"' => {
+                self.mode_stack.push(LexerMode::String);
+                (T::Ignore, None)
+            }
 
             // numbers
             c if c.is_ascii_digit() => self.lex_number_literal(),
@@ -545,5 +581,17 @@ impl Iterator for Lexer {
             lexeme: self.reader.advance_tail(),
             literal: literal,
         })
+    }
+}
+
+impl Iterator for Lexer {
+    type Item = Token;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.mode_stack.last() {
+            None => None,
+            Some(LexerMode::Normal) => self.normal_mode_next(),
+            Some(LexerMode::String) => self.string_mode_next(),
+        }
     }
 }
