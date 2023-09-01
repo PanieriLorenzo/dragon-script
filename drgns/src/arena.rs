@@ -88,7 +88,7 @@ impl Reader {
     }
 
     pub fn is_at_end(&self) -> bool {
-        self.current.start >= self.current.arena.len()
+        self.current.start + self.current.length >= self.current.arena.len()
     }
 
     /// look ahead in iterator without advancing
