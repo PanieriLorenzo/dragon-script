@@ -68,6 +68,12 @@ pub fn intern(src: String) -> Span {
 
 pub struct Reader {
     pub current: Span,
+    boundary: ReaderBounds,
+}
+
+enum ReaderBounds {
+    Absolute,
+    Relative(Span),
 }
 
 /// fast read-only iterator over arena
@@ -84,11 +90,37 @@ impl Reader {
                 start: 0,
                 length: 0,
             },
+            boundary: ReaderBounds::Absolute,
+        }
+    }
+
+    pub fn from_span(s: Span) -> Self {
+        Self {
+            current: Span {
+                arena: s.arena,
+                start: 0,
+                length: 0,
+            },
+            boundary: ReaderBounds::Relative(s),
+        }
+    }
+
+    pub fn abs_bounds(&self) -> (usize, usize) {
+        match self.boundary {
+            ReaderBounds::Absolute => (0, self.current.arena.len()),
+            ReaderBounds::Relative(s) => (s.start, s.start + s.length),
+        }
+    }
+
+    pub fn rel_bounds(&self) -> usize {
+        match self.boundary {
+            ReaderBounds::Absolute => self.current.arena.len(),
+            ReaderBounds::Relative(s) => s.length,
         }
     }
 
     pub fn is_at_end(&self) -> bool {
-        self.current.start + self.current.length >= self.current.arena.len()
+        self.head_idx() >= self.rel_bounds()
     }
 
     /// look ahead in iterator without advancing
@@ -102,7 +134,7 @@ impl Reader {
 
     /// look ahead 2 chars without advancing
     pub fn peek2(&self) -> Option<char> {
-        if self.head_idx() + 1 >= self.current.arena.len() {
+        if self.current.length + 1 >= self.rel_bounds() {
             None
         } else {
             Some(self.current.arena[self.head_idx() + 1])
