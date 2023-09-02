@@ -1,0 +1,17 @@
+// Addition
+1 + 2;
+
+// Subtraction
+2 - 1;
+
+// Multiplication
+2 * 3;
+
+// Division
+3 / 2;
+
+// Remainder
+3 % 2;
+
+// Negation
+-1;

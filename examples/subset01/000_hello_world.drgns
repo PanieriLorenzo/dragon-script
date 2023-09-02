@@ -1,0 +1,2 @@
+// there are no strings
+print!(42);

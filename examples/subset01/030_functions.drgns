@@ -1,0 +1,8 @@
+function foo(x, y) -> {
+    return x + y;
+};
+
+// it is also technically an expression lmao, it also is just 0
+foo := function this_is_kinda_dump(x, y) -> {
+    return x + y;
+};
