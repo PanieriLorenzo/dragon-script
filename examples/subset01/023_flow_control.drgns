@@ -1,0 +1,11 @@
+// loop exists immediately
+for {
+    if 1 {
+        break;
+    } else {
+        // does nothing but else is mandatory
+    };
+};
+
+// they are technically all expressions, but return 0
+for{ break 1; } == 0;
