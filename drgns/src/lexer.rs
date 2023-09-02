@@ -200,9 +200,28 @@ impl ToString for Token {
 //     line: usize,
 // }
 
+/// lexer modes let us deal with things like nested string interpolations and
+/// unpaired delimiters
 enum LexerMode {
+    // starts in normal mode
     Normal,
+
+    // a block surronded by parens
+    ParenBlock,
+
+    // a block surrounded by brackets
+    BracketBlock,
+
+    // a block surrounded by braces
+    BraceBlock,
+
+    // the body of a string literal, which may contain escae sequences and
+    // string interpolations
     String,
+
+    // very similar to normal mode, but deals with unmatched closing braces as
+    // endings to interpolations
+    Interpolation,
 }
 
 pub struct Lexer {
@@ -220,6 +239,10 @@ impl Lexer {
             reader,
             mode_stack: vec![LexerMode::Normal].into(),
         }
+    }
+
+    pub fn delim_depth(&self) -> usize {
+        self.mode_stack.len()
     }
 
     /// parses all tokens that start with +
@@ -414,7 +437,15 @@ impl Lexer {
     }
 
     fn ambiguous_dollar(&mut self) -> (TokenType, Option<PrimitiveValue>) {
-        todo!()
+        use crate::lexer::TokenType as T;
+        match (self.reader.peek(), self.reader.peek2()) {
+            (Some('{'), _) => {
+                self.reader.next();
+                self.mode_stack.push(LexerMode::Interpolation);
+                (T::DollarBrace, None)
+            }
+            _ => (T::StringPart, None),
+        }
     }
 
     fn lex_number_literal(&mut self) -> (TokenType, Option<PrimitiveValue>) {
@@ -508,17 +539,32 @@ impl Lexer {
 
     fn lex_string_part(&mut self) -> (TokenType, Option<PrimitiveValue>) {
         // immediately handles escaped characters, instead of using separate tokens
-        todo!()
-    }
-
-    fn string_mode_next(&mut self) -> Option<Token> {
-        use TokenType as T;
-        let c = self.reader.next()?;
-        let (token_type, literal) = match c {
-            '$' => self.ambiguous_dollar(),
-            _ => self.lex_string_part(),
-        };
-        todo!()
+        let mut literal: Vec<char> = vec![self
+            .reader
+            .current
+            .to_string()
+            .chars()
+            .next()
+            .unwrap_or_else(|| error_handler::fatal_unreachable())];
+        loop {
+            match (self.reader.peek(), self.reader.peek2()) {
+                (None, _) | (Some('"'), _) => break,
+                // TODO: handle special escape sequences like `\u1234`
+                (Some('\\'), Some(c)) => {
+                    self.reader.next();
+                    self.reader.next();
+                    literal.push(c);
+                }
+                (Some(c), _) => {
+                    self.reader.next();
+                    literal.push(c);
+                }
+            }
+        }
+        (
+            TokenType::StringPart,
+            Some(PrimitiveValue::String(literal.iter().collect())),
+        )
     }
 
     fn normal_mode_next(&mut self) -> Option<Token> {
@@ -529,12 +575,32 @@ impl Lexer {
             // '\'' => (T::SingleQuote, None),
             // '"' => (T::DoubleQuote, None),
             '^' => (T::Caret, None),
-            '(' => (T::LeftParen, None),
-            ')' => (T::RightParen, None),
-            '[' => (T::LeftBracket, None),
-            ']' => (T::RightBracket, None),
-            '{' => (T::LeftBrace, None),
-            '}' => (T::RightBrace, None),
+            '(' => {
+                self.mode_stack.push(LexerMode::ParenBlock);
+                (T::LeftParen, None)
+            }
+            ')' => {
+                // we never expect to reach a closing parens in normal mode,
+                // because we can only see a closing parens from within a ParensBlock
+                error_handler::err_unmatched_delimiter(')');
+                (T::Ignore, None)
+            }
+            '[' => {
+                self.mode_stack.push(LexerMode::BracketBlock);
+                (T::LeftBracket, None)
+            }
+            ']' => {
+                error_handler::err_unmatched_delimiter(']');
+                (T::Ignore, None)
+            }
+            '{' => {
+                self.mode_stack.push(LexerMode::BraceBlock);
+                (T::LeftBrace, None)
+            }
+            '}' => {
+                error_handler::err_unmatched_delimiter('}');
+                (T::Ignore, None)
+            }
             ',' => (T::Comma, None),
             ';' => (T::Semicolon, None),
             '|' => (T::Pipe, None),
@@ -564,7 +630,7 @@ impl Lexer {
             // string literals, require modal lexing
             '\"' => {
                 self.mode_stack.push(LexerMode::String);
-                (T::Ignore, None)
+                (T::DoubleQuote, None)
             }
 
             // numbers
@@ -582,16 +648,116 @@ impl Lexer {
             literal: literal,
         })
     }
+
+    /// proxy mode for normal mode that intercepts closing braces to terminate
+    /// interpolations
+    fn interpolation_mode_next(&mut self) -> Option<Token> {
+        use TokenType as T;
+        match self.reader.peek() {
+            Some('}') => {
+                self.reader.next();
+                self.mode_stack
+                    .pop()
+                    .unwrap_or_else(|| error_handler::fatal_unreachable());
+                Some(Token {
+                    token_type: T::RightBrace,
+                    lexeme: self.reader.advance_tail(),
+                    literal: None,
+                })
+            }
+            _ => self.normal_mode_next(),
+        }
+    }
+
+    /// proxy mode for normal mode that intercepts closing parens
+    fn paren_block_mode_next(&mut self) -> Option<Token> {
+        use TokenType as T;
+        match self.reader.peek() {
+            Some(')') => {
+                self.reader.next();
+                self.mode_stack
+                    .pop()
+                    .unwrap_or_else(|| error_handler::fatal_unreachable());
+                Some(Token {
+                    token_type: T::RightParen,
+                    lexeme: self.reader.advance_tail(),
+                    literal: None,
+                })
+            }
+            _ => self.normal_mode_next(),
+        }
+    }
+
+    /// proxy mode for normal mode that intercepts closing bracket
+    fn bracket_block_mode_next(&mut self) -> Option<Token> {
+        use TokenType as T;
+        match self.reader.peek() {
+            Some(']') => {
+                self.reader.next();
+                self.mode_stack
+                    .pop()
+                    .unwrap_or_else(|| error_handler::fatal_unreachable());
+                Some(Token {
+                    token_type: T::RightBracket,
+                    lexeme: self.reader.advance_tail(),
+                    literal: None,
+                })
+            }
+            _ => self.normal_mode_next(),
+        }
+    }
+
+    /// proxy mode for normal mode that intercepts closing brace
+    fn brace_block_mode_next(&mut self) -> Option<Token> {
+        use TokenType as T;
+        match self.reader.peek() {
+            Some('}') => {
+                self.reader.next();
+                self.mode_stack
+                    .pop()
+                    .unwrap_or_else(|| error_handler::fatal_unreachable());
+                Some(Token {
+                    token_type: T::RightBracket,
+                    lexeme: self.reader.advance_tail(),
+                    literal: None,
+                })
+            }
+            _ => self.normal_mode_next(),
+        }
+    }
+
+    fn string_mode_next(&mut self) -> Option<Token> {
+        use TokenType as T;
+        let c = self.reader.next()?;
+        let (token_type, literal) = match c {
+            '$' => self.ambiguous_dollar(),
+            '"' => {
+                self.mode_stack.pop();
+                (T::DoubleQuote, None)
+            }
+            _ => self.lex_string_part(),
+        };
+        Some(Token {
+            token_type,
+            lexeme: self.reader.advance_tail(),
+            literal: literal,
+        })
+    }
 }
 
 impl Iterator for Lexer {
     type Item = Token;
 
     fn next(&mut self) -> Option<Self::Item> {
+        use LexerMode as LM;
         match self.mode_stack.last() {
             None => None,
-            Some(LexerMode::Normal) => self.normal_mode_next(),
-            Some(LexerMode::String) => self.string_mode_next(),
+            Some(LM::Normal) => self.normal_mode_next(),
+            Some(LM::Interpolation) => self.interpolation_mode_next(),
+            Some(LM::String) => self.string_mode_next(),
+            Some(LM::ParenBlock) => self.paren_block_mode_next(),
+            Some(LM::BracketBlock) => self.bracket_block_mode_next(),
+            Some(LM::BraceBlock) => self.brace_block_mode_next(),
         }
     }
 }

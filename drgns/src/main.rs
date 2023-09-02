@@ -63,7 +63,7 @@ fn run_file(lx: &mut Lexer, path: &str) -> ! {
 fn run_prompt(lx: &mut Lexer) -> ! {
     loop {
         // TODO: fancy prompt
-        print!("> ");
+        print!("{}> ", lx.delim_depth() - 1);
         std::io::stdout().flush().unwrap_or_else(|_| {
             eh::fatal_io_generic("stdout cannot be written to");
         });

@@ -114,8 +114,27 @@ pub fn err_unclosed_delimiter(c: char) {
     push_error(CODE, format!("missing closing delimiter '{}'", c));
 }
 
-pub fn err_int_too_big() {
+pub fn err_unmatched_delimiter(c: char) {
     const CODE: u32 = 02003;
+    push_error(
+        CODE,
+        format!(
+            "unexpected closing delimiter '{}' with no matching opening",
+            c
+        ),
+    );
+}
+
+pub fn err_unclosed_escape_sequence() {
+    const CODE: u32 = 02004;
+    push_error(
+        CODE,
+        "unexpected end of input while parsing escape sequence",
+    );
+}
+
+pub fn err_int_too_big() {
+    const CODE: u32 = 02005;
     push_error(CODE, "int literal is too large (max is 2^47)");
 }
 
@@ -157,6 +176,8 @@ fn push_error(code: u32, msg: impl std::fmt::Debug) {
     eh.push(format!("[E{:0>5}] {:#?}", code, msg));
 }
 
+// TODO: use macros for error handling, so that the top of the stack trace is
+//       at the calling site
 fn crash_and_burn(code: u32, msg: impl std::fmt::Debug) -> ! {
     const FATAL_COPYPASTA: &str = concat!(
         "Ooops, that was unespected :/\n\n",
