@@ -15,3 +15,7 @@ Cargo.lock
 
 # VSCode package file
 *.vsix
+
+# ZIG
+zig-cache/
+zig-out/
