@@ -134,7 +134,7 @@ impl Reader {
 
     /// look ahead 2 chars without advancing
     pub fn peek2(&self) -> Option<char> {
-        if self.current.length + 1 >= self.rel_bounds() {
+        if self.head_idx() + 1 >= self.rel_bounds() {
             None
         } else {
             Some(self.current.arena[self.head_idx() + 1])
