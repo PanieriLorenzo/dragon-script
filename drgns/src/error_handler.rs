@@ -25,14 +25,11 @@
 
 use std::{
     backtrace::Backtrace,
-    process::exit,
     sync::{
         atomic::{AtomicBool, Ordering},
         OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard,
     },
 };
-
-use crate::arena::Span;
 
 #[macro_export]
 macro_rules! assert_pre_condition {

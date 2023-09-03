@@ -14,7 +14,7 @@ pub struct Span {
 }
 
 impl Span {
-    pub fn into_string(&self) -> String {
+    pub fn into_string(self) -> String {
         self.arena
             .iter()
             .skip(self.start)
@@ -142,16 +142,6 @@ impl Reader {
         }
     }
 
-    /// look ahead 2 chars without advancing
-    #[deprecated]
-    pub fn peek2(&self) -> Option<char> {
-        if self.head_idx() + 1 >= self.rel_bounds() {
-            None
-        } else {
-            Some(self.current.arena[self.head_idx() + 1])
-        }
-    }
-
     pub fn peek_n(&self, n: usize) -> Option<char> {
         if self.head_idx() + n >= self.rel_bounds() {
             None
@@ -187,20 +177,3 @@ impl Iterator for Reader {
         self.advance_head()
     }
 }
-
-// /// Get singleton writer to underlying arena
-// fn arena_writer() -> RwLockWriteGuard<'static, Vec<String>> {
-//     STRING_ARENA
-//         .get_or_init(|| RwLock::new(vec![]))
-//         .write()
-//         .unwrap_or_else(|_| fatal_generic("poisoned lock"))
-// }
-
-// /// Get singleton reader to underlying arena, prefer using this over
-// /// `arena_writer` as it is more efficient
-// fn arena_reader() -> RwLockReadGuard<'static, Vec<String>> {
-//     STRING_ARENA
-//         .get_or_init(|| RwLock::new(vec![]))
-//         .read()
-//         .unwrap_or_else(|_| fatal_generic("poisoned lock"))
-// }

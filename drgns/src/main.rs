@@ -1,11 +1,10 @@
-use arena::intern;
-use clap::{Error, Parser};
+#![allow(clippy::zero_prefixed_literal)]
+// TODO: remove in production
+#![allow(dead_code)]
+
+use clap::Parser;
 use error_handler as eh;
-use std::{
-    io::Write,
-    process::{exit, ExitCode},
-    sync::{OnceLock, OnceState, RwLock},
-};
+use std::io::Write;
 
 use crate::lexer::Lexer;
 
@@ -78,7 +77,7 @@ fn run_prompt(lx: &mut Lexer) -> ! {
 
 fn run(lx: &mut Lexer, source: String) {
     arena::intern(source);
-    while let Some(t) = lx.next() {
+    for t in lx {
         println!("{}", t);
     }
 }

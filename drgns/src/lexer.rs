@@ -1,18 +1,13 @@
 use std::{
-    cell::OnceCell,
     collections::HashMap,
     fmt::Display,
     sync::{OnceLock, RwLock},
 };
 
-use append_only_vec::AppendOnlyVec;
-use clap::error;
 use smallvec::SmallVec;
 
 use crate::{
     arena::{Reader, Span},
-    data,
-    data::PrimitiveValue,
     error_handler as eh,
 };
 
@@ -63,10 +58,6 @@ pub enum TokenType {
 
     // unrecognized tokens
     Unknown,
-
-    // a "fake" character emitted at the end of the stream
-    // TODO: this is unused? just use Option<Token>::None
-    EOF,
 }
 
 static KEYWORDS: OnceLock<RwLock<HashMap<&'static str, TokenType>>> = OnceLock::new();
@@ -154,33 +145,18 @@ impl Lexer {
     /// [=]     => <=
     /// []      => <
     /// ```
-    fn lex_ambiguous_prefixes(
-        &mut self,
-        mappings: &[(&[Option<char>], TokenType)],
-    ) -> Option<TokenType> {
+    fn lex_postfixes(&mut self, mappings: &[(&[Option<char>], TokenType)]) -> Option<TokenType> {
         mappings.iter().find_map(|(cs, tt)| {
             cs.iter()
                 .enumerate()
                 .all(|(i, &c)| self.reader.peek_n(i) == c)
                 .then(|| {
-                    (0..cs.len()).into_iter().for_each(|_| {
+                    (0..cs.len()).for_each(|_| {
                         self.reader.next();
                     });
                     *tt
                 })
         })
-    }
-
-    /// parses all tokens that start with -
-    fn ambiguous_minus(&mut self) -> (TokenType, Option<PrimitiveValue>) {
-        use crate::lexer::TokenType as T;
-        match (self.reader.peek(), self.reader.peek2()) {
-            (Some('>'), _) => {
-                self.reader.next();
-                (T::Arrow, None)
-            }
-            _ => (T::Minus, None),
-        }
     }
 
     /// parses all tokens that start with a /
@@ -195,42 +171,6 @@ impl Lexer {
                 T::Ignore
             }
             _ => T::Div,
-        }
-    }
-
-    /// parses all tokens that start with <
-    fn ambiguous_less(&mut self) -> (TokenType, Option<PrimitiveValue>) {
-        use crate::lexer::TokenType as T;
-        match (self.reader.peek(), self.reader.peek2()) {
-            (Some('='), _) => {
-                self.reader.next();
-                (T::LessEquals, None)
-            }
-            _ => (T::Less, None),
-        }
-    }
-
-    /// parses all tokens that start with >
-    fn ambiguous_greater(&mut self) -> (TokenType, Option<PrimitiveValue>) {
-        use crate::lexer::TokenType as T;
-        match (self.reader.peek(), self.reader.peek2()) {
-            (Some('='), _) => {
-                self.reader.next();
-                (T::GreaterEquals, None)
-            }
-            _ => (T::Greater, None),
-        }
-    }
-
-    /// parses all tokens that start with a =
-    fn ambiguous_equal(&mut self) -> (TokenType, Option<PrimitiveValue>) {
-        use crate::lexer::TokenType as T;
-        match (self.reader.peek(), self.reader.peek2()) {
-            (Some('='), _) => {
-                self.reader.next();
-                (T::EqualEqual, None)
-            }
-            _ => (T::Equal, None),
         }
     }
 
@@ -285,29 +225,29 @@ impl Lexer {
             // match one or more character tokens
             //'-' => self.ambiguous_minus(),
             '-' => self
-                .lex_ambiguous_prefixes(&[(&[Some('>')], TT::Arrow), (&[], TT::Minus)])
+                .lex_postfixes(&[(&[Some('>')], TT::Arrow), (&[], TT::Minus)])
                 .unwrap_or_else(|| eh::fatal_unreachable()),
             '<' => self
-                .lex_ambiguous_prefixes(&[(&[Some('=')], TT::LessEquals), (&[], TT::Less)])
+                .lex_postfixes(&[(&[Some('=')], TT::LessEquals), (&[], TT::Less)])
                 .unwrap_or_else(|| eh::fatal_unreachable()),
             '>' => self
-                .lex_ambiguous_prefixes(&[(&[Some('=')], TT::GreaterEquals), (&[], TT::Greater)])
+                .lex_postfixes(&[(&[Some('=')], TT::GreaterEquals), (&[], TT::Greater)])
                 .unwrap_or_else(|| eh::fatal_unreachable()),
             '=' => self
-                .lex_ambiguous_prefixes(&[(&[Some('=')], TT::EqualEqual), (&[], TT::Equal)])
+                .lex_postfixes(&[(&[Some('=')], TT::EqualEqual), (&[], TT::Equal)])
                 .unwrap_or_else(|| eh::fatal_unreachable()),
 
             '/' => self.lex_div_or_comment(),
 
             // match 2 character tokens
             '!' => self
-                .lex_ambiguous_prefixes(&[(&[Some('=')], TT::BangEquals)])
+                .lex_postfixes(&[(&[Some('=')], TT::BangEquals)])
                 .unwrap_or_else(|| {
                     eh::err_unexpected_character(c);
                     TT::Unknown
                 }),
             ':' => self
-                .lex_ambiguous_prefixes(&[(&[Some('=')], TT::ColonEquals)])
+                .lex_postfixes(&[(&[Some('=')], TT::ColonEquals)])
                 .unwrap_or_else(|| {
                     eh::err_unexpected_character(c);
                     TT::Unknown
