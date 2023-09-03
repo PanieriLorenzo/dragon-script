@@ -12,7 +12,7 @@ use crate::{
     arena::{Reader, Span},
     data,
     data::PrimitiveValue,
-    error_handler,
+    error_handler as eh,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -100,20 +100,11 @@ impl std::fmt::Display for TokenType {
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: Span,
-    literal: Option<data::PrimitiveValue>,
 }
 
 impl ToString for Token {
     fn to_string(&self) -> String {
-        return format!(
-            "({}, {}, {})",
-            self.token_type,
-            self.lexeme,
-            match &self.literal {
-                None => "".to_owned(),
-                Some(x) => x.to_string(),
-            }
-        );
+        return format!("{}({})", self.token_type, self.lexeme,);
     }
 }
 
@@ -192,17 +183,17 @@ impl Lexer {
     }
 
     /// parses all tokens that start with a /
-    fn ambiguous_slash(&mut self) -> (TokenType, Option<PrimitiveValue>) {
+    fn lex_div_or_comment(&mut self) -> TokenType {
         use crate::lexer::TokenType as T;
-        match (self.reader.peek(), self.reader.peek2()) {
+        match self.reader.peek() {
             // comment
-            (Some('/'), _) => {
+            Some('/') => {
                 while self.reader.peek() != Some('\n') && self.reader.peek().is_some() {
                     self.reader.next();
                 }
-                (T::Ignore, None)
+                T::Ignore
             }
-            _ => (T::Div, None),
+            _ => T::Div,
         }
     }
 
@@ -242,7 +233,7 @@ impl Lexer {
         }
     }
 
-    fn lex_number_literal(&mut self) -> (TokenType, Option<PrimitiveValue>) {
+    fn lex_number_literal(&mut self) -> TokenType {
         // helper for matching digit or digit separator, e.g. 123_456_789
         let is_digit_or_sep = |c: char| c.is_ascii_digit() || c == '_';
 
@@ -251,20 +242,10 @@ impl Lexer {
             self.reader.next();
         }
 
-        let val = self
-            .reader
-            .current
-            .to_string()
-            .replace("_", "")
-            .parse()
-            .unwrap_or_else(|_| {
-                error_handler::err_int_too_big();
-                0
-            });
-        (TokenType::IntLit, Some(PrimitiveValue::Int(val)))
+        TokenType::IntLit
     }
 
-    fn lex_identifier(&mut self) -> (TokenType, Option<PrimitiveValue>) {
+    fn lex_identifier(&mut self) -> TokenType {
         while self
             .reader
             .peek()
@@ -276,60 +257,62 @@ impl Lexer {
         let text = self.reader.current.to_string();
         if let Some(type_) = init_keywords()
             .read()
-            .unwrap_or_else(|_| error_handler::fatal_generic("poisoned lock"))
+            .unwrap_or_else(|_| eh::fatal_generic("poisoned lock"))
             .get(&text as &str)
         {
-            (*type_, None)
+            *type_
         } else {
-            (TokenType::Identifier, None)
+            TokenType::Identifier
         }
     }
 
     fn normal_mode_next(&mut self) -> Option<Token> {
-        use TokenType as T;
+        use TokenType as TT;
         let c = self.reader.next()?;
-        let (token_type, literal) = match c {
+        let token_type = match c {
             // match unambiguously single-character tokens
-            '(' => (T::LeftParen, None),
-            ')' => (T::RightParen, None),
-            '{' => (T::LeftBrace, None),
-            '}' => (T::RightBrace, None),
-            ',' => (T::Comma, None),
-            ';' => (T::Semicolon, None),
-            '+' => (T::Plus, None),
-            '*' => (T::Mul, None),
-            '%' => (T::Mod, None),
+            '(' => TT::LeftParen,
+            ')' => TT::RightParen,
+            '{' => TT::LeftBrace,
+            '}' => TT::RightBrace,
+            ',' => TT::Comma,
+            ';' => TT::Semicolon,
+            '+' => TT::Plus,
+            '*' => TT::Mul,
+            '%' => TT::Mod,
 
             // match one or more character tokens
             //'-' => self.ambiguous_minus(),
-            '-' => (
-                self.lex_ambiguous_prefixes(&[(&[Some('>')], T::Arrow), (&[], T::Minus)])
-                    .unwrap(),
-                None,
-            ),
-            '<' => self.ambiguous_less(),
-            '>' => self.ambiguous_greater(),
-            '=' => self.ambiguous_equal(),
+            '-' => self
+                .lex_ambiguous_prefixes(&[(&[Some('>')], TT::Arrow), (&[], TT::Minus)])
+                .unwrap_or_else(|| eh::fatal_unreachable()),
+            '<' => self
+                .lex_ambiguous_prefixes(&[(&[Some('=')], TT::LessEquals), (&[], TT::Less)])
+                .unwrap_or_else(|| eh::fatal_unreachable()),
+            '>' => self
+                .lex_ambiguous_prefixes(&[(&[Some('=')], TT::GreaterEquals), (&[], TT::Greater)])
+                .unwrap_or_else(|| eh::fatal_unreachable()),
+            '=' => self
+                .lex_ambiguous_prefixes(&[(&[Some('=')], TT::EqualEqual), (&[], TT::Equal)])
+                .unwrap_or_else(|| eh::fatal_unreachable()),
 
-            // includes comment vvv
-            '/' => self.ambiguous_slash(),
+            '/' => self.lex_div_or_comment(),
 
             // ignore whitespace
-            ' ' | '\n' | '\r' | '\t' => (T::Ignore, None),
+            ' ' | '\n' | '\r' | '\t' => TT::Ignore,
 
             // numbers
             c if c.is_ascii_digit() => self.lex_number_literal(),
             c if c.is_ascii_alphabetic() || c == '_' => self.lex_identifier(),
 
             _ => {
-                error_handler::err_unexpected_character(c);
-                (T::Unknown, None)
+                eh::err_unexpected_character(c);
+                TT::Unknown
             }
         };
         Some(Token {
             token_type,
             lexeme: self.reader.advance_tail(),
-            literal: literal,
         })
     }
 }

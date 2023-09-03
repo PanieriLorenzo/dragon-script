@@ -79,6 +79,6 @@ fn run_prompt(lx: &mut Lexer) -> ! {
 fn run(lx: &mut Lexer, source: String) {
     arena::intern(source);
     while let Some(t) = lx.next() {
-        println!("{:#?}", t.to_string());
+        println!("{}", t.to_string());
     }
 }
