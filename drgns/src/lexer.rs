@@ -299,6 +299,20 @@ impl Lexer {
 
             '/' => self.lex_div_or_comment(),
 
+            // match 2 character tokens
+            '!' => self
+                .lex_ambiguous_prefixes(&[(&[Some('=')], TT::BangEquals)])
+                .unwrap_or_else(|| {
+                    eh::err_unexpected_character(c);
+                    TT::Unknown
+                }),
+            ':' => self
+                .lex_ambiguous_prefixes(&[(&[Some('=')], TT::ColonEquals)])
+                .unwrap_or_else(|| {
+                    eh::err_unexpected_character(c);
+                    TT::Unknown
+                }),
+
             // ignore whitespace
             ' ' | '\n' | '\r' | '\t' => TT::Ignore,
 
