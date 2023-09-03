@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 
 use append_only_vec::AppendOnlyVec;
 
@@ -14,7 +14,7 @@ pub struct Span {
 }
 
 impl Span {
-    pub fn to_string(&self) -> String {
+    pub fn into_string(&self) -> String {
         self.arena
             .iter()
             .skip(self.start)
@@ -43,10 +43,20 @@ impl Span {
     }
 }
 
+impl Debug for Span {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Span")
+            .field("arena", &"omitted")
+            .field("start", &self.start)
+            .field("length", &self.length)
+            .finish()
+    }
+}
+
 impl Display for Span {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let slice = self.to_string();
-        write!(f, "{}", slice)
+        let slice = self.into_string();
+        write!(f, "{:?}", slice)
     }
 }
 

@@ -1,6 +1,7 @@
 use std::{
     cell::OnceCell,
     collections::HashMap,
+    fmt::Display,
     sync::{OnceLock, RwLock},
 };
 
@@ -96,15 +97,15 @@ impl std::fmt::Display for TokenType {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: Span,
 }
 
-impl ToString for Token {
-    fn to_string(&self) -> String {
-        return format!("{}({})", self.token_type, self.lexeme,);
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}({})", self.token_type, self.lexeme)
     }
 }
 
