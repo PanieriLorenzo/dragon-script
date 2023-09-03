@@ -153,6 +153,32 @@ impl Lexer {
         self.mode_stack.len()
     }
 
+    /// lex a group of tokens that share a common prefix, for example
+    /// <= and <. Provide a list of mappings from postfixes to tokens, they
+    /// are matched in order, so the most specific should be first.
+    ///
+    /// Example mapping:
+    /// ```txt
+    /// [=]     => <=
+    /// []      => <
+    /// ```
+    fn lex_ambiguous_prefixes(
+        &mut self,
+        mappings: &[(&[Option<char>], TokenType)],
+    ) -> Option<TokenType> {
+        mappings.iter().find_map(|(cs, tt)| {
+            cs.iter()
+                .enumerate()
+                .all(|(i, &c)| self.reader.peek_n(i) == c)
+                .then(|| {
+                    (0..cs.len()).into_iter().for_each(|_| {
+                        self.reader.next();
+                    });
+                    *tt
+                })
+        })
+    }
+
     /// parses all tokens that start with -
     fn ambiguous_minus(&mut self) -> (TokenType, Option<PrimitiveValue>) {
         use crate::lexer::TokenType as T;
@@ -275,7 +301,12 @@ impl Lexer {
             '%' => (T::Mod, None),
 
             // match one or more character tokens
-            '-' => self.ambiguous_minus(),
+            //'-' => self.ambiguous_minus(),
+            '-' => (
+                self.lex_ambiguous_prefixes(&[(&[Some('>')], T::Arrow), (&[], T::Minus)])
+                    .unwrap(),
+                None,
+            ),
             '<' => self.ambiguous_less(),
             '>' => self.ambiguous_greater(),
             '=' => self.ambiguous_equal(),

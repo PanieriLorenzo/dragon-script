@@ -133,11 +133,20 @@ impl Reader {
     }
 
     /// look ahead 2 chars without advancing
+    #[deprecated]
     pub fn peek2(&self) -> Option<char> {
         if self.head_idx() + 1 >= self.rel_bounds() {
             None
         } else {
             Some(self.current.arena[self.head_idx() + 1])
+        }
+    }
+
+    pub fn peek_n(&self, n: usize) -> Option<char> {
+        if self.head_idx() + n >= self.rel_bounds() {
+            None
+        } else {
+            Some(self.current.arena[self.head_idx() + n])
         }
     }
 
