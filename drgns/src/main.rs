@@ -4,6 +4,7 @@
 
 use clap::Parser;
 use error_handler as eh;
+use lexer::TokenType;
 use std::io::Write;
 
 use crate::lexer::Lexer;
@@ -77,7 +78,7 @@ fn run_prompt(lx: &mut Lexer) -> ! {
 
 fn run(lx: &mut Lexer, source: String) {
     arena::intern(source);
-    for t in lx {
+    for t in lx.filter(|t| t.token_type != TokenType::Ignore) {
         println!("{}", t);
     }
 }
