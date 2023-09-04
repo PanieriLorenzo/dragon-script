@@ -206,11 +206,11 @@ impl Lexer {
             self.reader.next();
         }
 
-        let text = self.reader.current.to_string();
+        let text = self.reader.current.into_string();
         if let Some(type_) = init_keywords()
             .read()
             .unwrap_or_else(|_| eh::fatal_generic("poisoned lock"))
-            .get(&text as &str)
+            .get(text.as_str())
         {
             *type_
         } else {
