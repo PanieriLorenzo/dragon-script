@@ -76,6 +76,11 @@ pub fn intern(src: String) -> Span {
     }
 }
 
+/// Dump contents of arena
+pub fn dump() -> String {
+    STRING_ARENA.iter().collect()
+}
+
 pub struct Reader {
     pub current: Span,
     boundary: ReaderBounds,

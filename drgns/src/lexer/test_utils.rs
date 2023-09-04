@@ -1,9 +1,14 @@
 use std::{
     collections::HashMap,
+    str::Chars,
     sync::{OnceLock, RwLock},
 };
 
-use super::{OnceMap, TokenType};
+use crate::arena::{intern, Reader};
+
+use super::{Lexer, OnceMap, TokenType};
+
+use itertools::{iproduct, Product};
 
 static STR_2_TOKENS: OnceMap<&'static str, TokenType> = OnceLock::new();
 
@@ -99,5 +104,25 @@ pub fn tokens_2_str(tt: TokenType) -> &'static str {
         TT::True => "true",
         TT::Ignore => " ",
         TT::Unknown => "?",
+    }
+}
+
+#[macro_export]
+/// produces iterator over all sequences of 2 printable ascii characters
+macro_rules! two_char_strings {
+    () => {{
+        let all_ascii = "\n\r\t !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~".to_string();
+        iproduct!(all_ascii.clone().chars(), all_ascii.clone().chars()).map(|(s, t)| format!("{}{}", s, t))
+    }};
+}
+
+pub fn make_lexer() -> Lexer {
+    let mut lx = Lexer::new(Reader::new());
+    // pad to avoid interference as arena is not reset
+    intern("\n    ".to_string());
+    loop {
+        if let None = lx.next() {
+            return lx;
+        }
     }
 }
