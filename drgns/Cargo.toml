@@ -9,3 +9,5 @@ edition = "2021"
 append-only-vec = "0.1.2"
 clap = { version = "4.4.0", features = ["derive"] }
 smallvec = "1.11.0"
+strum = "0.25.0"
+strum_macros = "0.25.2"

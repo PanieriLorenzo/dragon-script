@@ -5,13 +5,20 @@ use std::{
 };
 
 use smallvec::SmallVec;
+use strum_macros::EnumIter;
 
 use crate::{
     arena::{Reader, Span},
     error_handler as eh,
 };
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg(test)]
+mod test_utils;
+
+#[cfg(test)]
+mod test;
+
+#[derive(Debug, Clone, Copy, PartialEq, EnumIter)]
 pub enum TokenType {
     // unambiguously single-character tokens
     LeftParen,
@@ -46,6 +53,7 @@ pub enum TokenType {
     // Keywords
     And,
     Break,
+    False,
     For,
     Function,
     Not,
@@ -60,7 +68,9 @@ pub enum TokenType {
     Unknown,
 }
 
-static KEYWORDS: OnceLock<RwLock<HashMap<&'static str, TokenType>>> = OnceLock::new();
+type OnceMap<K, V> = OnceLock<RwLock<HashMap<K, V>>>;
+
+static KEYWORDS: OnceMap<&'static str, TokenType> = OnceLock::new();
 
 fn init_keywords() -> &'static RwLock<HashMap<&'static str, TokenType>> {
     KEYWORDS.get_or_init(|| {
@@ -68,6 +78,7 @@ fn init_keywords() -> &'static RwLock<HashMap<&'static str, TokenType>> {
             [
                 ("and", TokenType::And),
                 ("break", TokenType::Break),
+                ("false", TokenType::False),
                 ("for", TokenType::For),
                 ("function", TokenType::Function),
                 ("not", TokenType::Not),
