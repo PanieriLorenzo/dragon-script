@@ -1,0 +1,29 @@
+Program
+    = { Statement }, EOI
+    ;
+
+Statement
+    = ( Assignment | ExitStmt ), Endl
+    ;
+
+ExitStmt
+    = Exit, Expression
+    ;
+
+Assignment
+    = Identifier, ColonEqual, Expression
+    ;
+
+Expression
+    = Factor, Pow, Factor
+    | Factor, ( Mul| Div | Mod ), Factor
+    | Factor, ( Plus | Minus ), Factor
+    | Minus, Factor
+    | Factor
+    ;
+
+Factor
+    = Identifier
+    | IntLiteral
+    | LeftParen, Expression, RightParen
+    ;
