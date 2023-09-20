@@ -1,5 +1,5 @@
 use crate::{
-    arena::Reader,
+    arena::{Reader, Span},
     error_handler as eh,
     lexer::{Lexer, Token, TokenType as TT},
 };
@@ -29,12 +29,22 @@ impl Parser {
     = Minus, Factor
     ;
      */
-    pub fn match_un_expression(&mut self) -> Option<ParseTreeNodeType> {
-        self.match_one(TT::Minus)?;
+    pub fn match_un_expression(&mut self) -> Option<ParseTreeNode> {
+        let t = self.match_one(TT::Minus)?;
         let factor = self.match_int_literal()?;
-        Some(ParseTreeNodeType::UnExpression {
-            op: boxed!(ParseTreeNodeType::Neg),
-            factor: boxed!(factor),
+        // Some(ParseTreeNodeType::UnExpression {
+        //     op: boxed!(ParseTreeNodeType::Neg),
+        //     factor: boxed!(factor),
+        // })
+        Some(ParseTreeNode {
+            ty: ParseTreeNodeType::UnExpression {
+                op: boxed!(ParseTreeNode {
+                    ty: ParseTreeNodeType::Neg,
+                    span: t.lexeme,
+                }),
+                factor: boxed!(factor.clone()),
+            },
+            span: t.lexeme + factor.span,
         })
     }
 
@@ -45,9 +55,12 @@ impl Parser {
     | LeftParen, Expression, RightParen
     ;
      */
-    pub fn match_int_literal(&mut self) -> Option<ParseTreeNodeType> {
+    pub fn match_int_literal(&mut self) -> Option<ParseTreeNode> {
         let t = self.match_one(TT::IntLit)?;
-        Some(ParseTreeNodeType::IntLiteral)
+        Some(ParseTreeNode {
+            ty: ParseTreeNodeType::IntLiteral,
+            span: t.lexeme,
+        })
     }
 
     pub fn match_one(&mut self, tt: TT) -> Option<Token> {
@@ -61,12 +74,18 @@ impl Parser {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+pub struct ParseTreeNode {
+    pub ty: ParseTreeNodeType,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone)]
 pub enum ParseTreeNodeType {
     Neg,
     UnExpression {
-        op: Box<ParseTreeNodeType>,
-        factor: Box<ParseTreeNodeType>,
+        op: Box<ParseTreeNode>,
+        factor: Box<ParseTreeNode>,
     },
     IntLiteral,
 }

@@ -1,6 +1,11 @@
-use std::fmt::{Debug, Display};
+use std::{
+    fmt::{Debug, Display},
+    ops::{Add, AddAssign},
+};
 
 use append_only_vec::AppendOnlyVec;
+
+use crate::assert_pre_condition;
 
 // TODO: move into struct when you are ready to deal with the lifetime
 //       mess... ugh...
@@ -57,6 +62,19 @@ impl Display for Span {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let slice = self.into_string();
         write!(f, "{:?}", slice)
+    }
+}
+
+impl Add for Span {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        assert_pre_condition!(self.start <= rhs.start && self.end() <= rhs.end());
+        Self {
+            arena: self.arena,
+            start: self.start,
+            length: rhs.end() - self.start,
+        }
     }
 }
 
