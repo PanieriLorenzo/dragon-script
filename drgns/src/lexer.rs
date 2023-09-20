@@ -23,43 +23,25 @@ pub enum TokenType {
     // unambiguously single-character tokens
     LeftParen,
     RightParen,
-    LeftBrace,
-    RightBrace,
     Comma,
-    Semicolon,
     Plus,
-    Mul,
     Mod,
+    Minus,
 
     // one or more chars
     Div, // or comment
-    Minus,
-    Arrow,
-    Less,
-    LessEquals,
-    Greater,
-    GreaterEquals,
-    Equal,
-    EqualEqual,
+    Mul,
+    Pow,
 
     // two character
     ColonEquals,
-    BangEquals,
 
     // literals
     Identifier,
     IntLit,
 
     // Keywords
-    And,
-    Break,
-    False,
-    For,
-    Function,
-    Not,
-    Or,
-    Return,
-    True,
+    Exit,
 
     // whitespace, comments and already handled tokens
     Ignore,
@@ -73,24 +55,7 @@ type OnceMap<K, V> = OnceLock<RwLock<HashMap<K, V>>>;
 static KEYWORDS: OnceMap<&'static str, TokenType> = OnceLock::new();
 
 fn init_keywords() -> &'static RwLock<HashMap<&'static str, TokenType>> {
-    KEYWORDS.get_or_init(|| {
-        RwLock::new(
-            [
-                ("and", TokenType::And),
-                ("break", TokenType::Break),
-                ("false", TokenType::False),
-                ("for", TokenType::For),
-                ("function", TokenType::Function),
-                ("not", TokenType::Not),
-                ("or", TokenType::Or),
-                ("return", TokenType::Return),
-                ("true", TokenType::True),
-            ]
-            .iter()
-            .cloned()
-            .collect(),
-        )
-    })
+    KEYWORDS.get_or_init(|| RwLock::new([("exit", TokenType::Exit)].iter().cloned().collect()))
 }
 
 impl std::fmt::Display for TokenType {
@@ -222,41 +187,21 @@ impl Lexer {
         use TokenType as TT;
         let c = self.reader.next()?;
         let token_type = match c {
-            // match unambiguously single-character tokens
-            '(' => TT::LeftParen,
-            ')' => TT::RightParen,
-            '{' => TT::LeftBrace,
-            '}' => TT::RightBrace,
+            // unambiguously single-character tokens
+            ')' => TT::LeftParen,
+            '(' => TT::RightParen,
             ',' => TT::Comma,
-            ';' => TT::Semicolon,
             '+' => TT::Plus,
-            '*' => TT::Mul,
             '%' => TT::Mod,
+            '-' => TT::Minus,
 
-            // match one or more character tokens
-            //'-' => self.ambiguous_minus(),
-            '-' => self
-                .lex_postfixes(&[(&[Some('>')], TT::Arrow), (&[], TT::Minus)])
-                .unwrap_or_else(|| eh::fatal_unreachable()),
-            '<' => self
-                .lex_postfixes(&[(&[Some('=')], TT::LessEquals), (&[], TT::Less)])
-                .unwrap_or_else(|| eh::fatal_unreachable()),
-            '>' => self
-                .lex_postfixes(&[(&[Some('=')], TT::GreaterEquals), (&[], TT::Greater)])
-                .unwrap_or_else(|| eh::fatal_unreachable()),
-            '=' => self
-                .lex_postfixes(&[(&[Some('=')], TT::EqualEqual), (&[], TT::Equal)])
+            // one or more chars
+            '/' => self.lex_div_or_comment(), // or comment
+            '*' => self
+                .lex_postfixes(&[(&[Some('*')], TT::Pow), (&[], TT::Mul)])
                 .unwrap_or_else(|| eh::fatal_unreachable()),
 
-            '/' => self.lex_div_or_comment(),
-
-            // match 2 character tokens
-            '!' => self
-                .lex_postfixes(&[(&[Some('=')], TT::BangEquals)])
-                .unwrap_or_else(|| {
-                    eh::err_unexpected_character(c);
-                    TT::Unknown
-                }),
+            // two character
             ':' => self
                 .lex_postfixes(&[(&[Some('=')], TT::ColonEquals)])
                 .unwrap_or_else(|| {
@@ -269,6 +214,8 @@ impl Lexer {
 
             // numbers
             c if c.is_ascii_digit() => self.lex_number_literal(),
+
+            // literals
             c if c.is_ascii_alphabetic() || c == '_' => self.lex_identifier(),
 
             _ => {
