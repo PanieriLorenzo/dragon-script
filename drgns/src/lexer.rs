@@ -235,9 +235,15 @@ impl Iterator for Lexer {
 
     fn next(&mut self) -> Option<Self::Item> {
         use LexerMode as LM;
-        match self.mode_stack.last() {
-            None => None,
-            Some(LM::Normal) => self.normal_mode_next(),
+        use TokenType as TT;
+        loop {
+            let ot = match self.mode_stack.last() {
+                None => None,
+                Some(LM::Normal) => self.normal_mode_next(),
+            };
+            if ot.as_ref().is_some_and(|t| t.token_type != TT::Ignore) {
+                return ot;
+            }
         }
     }
 }

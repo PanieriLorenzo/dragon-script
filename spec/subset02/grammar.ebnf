@@ -15,12 +15,21 @@ Assignment
     ;
 
 Expression
-    = Factor, Pow, Factor
-    | Factor, ( Mul| Div | Mod ), Factor
-    | Factor, ( Plus | Minus ), Factor
-    | Minus, Factor
+    = BinExpression
+    | UnExpression
     | Factor
     ;
+
+BinExpression
+    = Factor, Pow, Factor
+    | Factor, ( Mul | Div | Mod ), Factor
+    | Factor, ( Plus | Minus ), Factor
+    ;
+
+UnExpression
+    = Minus, Factor
+    ;
+
 
 Factor
     = Identifier
