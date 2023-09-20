@@ -1,0 +1,2 @@
+// there are no strings and no functions, exit is a keyword
+exit 42
