@@ -40,6 +40,15 @@ macro_rules! assert_pre_condition {
     };
 }
 
+#[macro_export]
+macro_rules! assert_invariant {
+    ($condition:expr) => {
+        if !$condition {
+            $crate::error_handler::fatal_invariant(stringify!($condition))
+        }
+    };
+}
+
 /// Print the errors collected so far and returns the most appropriate UNIX
 /// error code.
 pub fn display_errors() -> i32 {

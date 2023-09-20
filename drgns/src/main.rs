@@ -2,9 +2,10 @@
 // TODO: remove in production
 #![allow(dead_code)]
 
-use clap::Parser;
+use clap;
 use error_handler as eh;
 use lexer::TokenType;
+use parser::Parser;
 use std::io::Write;
 
 use crate::lexer::Lexer;
@@ -13,9 +14,10 @@ mod arena;
 mod data;
 mod error_handler;
 mod lexer;
+mod parser;
 
 // TODO: overwrite built-in error handling for consistent style
-#[derive(Parser, Debug)]
+#[derive(clap::Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
     #[arg(short, long)]
@@ -26,21 +28,22 @@ struct Args {
 }
 
 fn main() -> ! {
-    let args = Args::parse();
+    let args = <Args as clap::Parser>::parse();
     let mut lx = Lexer::new(arena::Reader::new());
+    let mut ps = Parser::new(lx);
 
     // once main is done parsing cli arguments, we move execution to the
     // appropriate runners. These runners never return.
     if let Some(path) = args.input.as_deref() {
         // run in batch mode
-        run_file(&mut lx, path);
+        run_file(&mut ps, path);
     } else {
         // run in REPL mode
-        run_prompt(&mut lx);
+        run_prompt(&mut ps);
     }
 }
 
-fn run_file(lx: &mut Lexer, path: &str) -> ! {
+fn run_file(ps: &mut Parser, path: &str) -> ! {
     // define an error handler here for convenience
     let errexit = || -> ! {
         std::process::exit(eh::display_errors());
@@ -56,14 +59,15 @@ fn run_file(lx: &mut Lexer, path: &str) -> ! {
             _ => eh::fatal_unreachable(),
         },
     };
-    run(lx, source);
+    run(ps, source);
     errexit();
 }
 
-fn run_prompt(lx: &mut Lexer) -> ! {
+fn run_prompt(ps: &mut Parser) -> ! {
     loop {
         // TODO: fancy prompt
-        print!("{}> ", lx.delim_depth() - 1);
+        //print!("{}> ", lx.delim_depth() - 1);
+        print!("> ");
         std::io::stdout().flush().unwrap_or_else(|_| {
             eh::fatal_io_generic("stdout cannot be written to");
         });
@@ -71,14 +75,14 @@ fn run_prompt(lx: &mut Lexer) -> ! {
         std::io::stdin().read_line(&mut input).unwrap_or_else(|_| {
             eh::fatal_io_generic("stdout cannot be read");
         });
-        run(lx, input);
+        run(ps, input);
         eh::display_errors();
     }
 }
 
-fn run(lx: &mut Lexer, source: String) {
+fn run(ps: &mut Parser, source: String) {
     arena::intern(source);
-    for t in lx.filter(|t| t.token_type != TokenType::Ignore) {
+    for t in ps {
         println!("{}", t);
     }
 }
