@@ -7,8 +7,8 @@
 use clap;
 use error_handler as eh;
 use lexer::TokenType;
-use parser::Parser;
-use std::io::Write;
+use parser::{BinExpression, Expression, Parser};
+use std::{io::Write, process::exit};
 
 use crate::lexer::Lexer;
 
@@ -16,6 +16,7 @@ mod arena;
 mod data;
 mod error_handler;
 mod lexer;
+mod lookahead;
 mod parser;
 
 // TODO: overwrite built-in error handling for consistent style
@@ -31,8 +32,23 @@ struct Args {
 
 fn main() -> ! {
     let args = <Args as clap::Parser>::parse();
-    let pr = Parser::new(Lexer::new(arena::Reader::new()));
+    let mut pr = Parser::new(Lexer::new(arena::Reader::new()));
 
+    // let e = Expression::BinExpression(BinExpression {
+    //     lhs: Box::new(Expression::IntLiteral(42)),
+    //     op: parser::BinOperator::Pow,
+    //     rhs: Box::new(Expression::BinExpression(BinExpression {
+    //         lhs: Box::new(Expression::IntLiteral(22)),
+    //         op: parser::BinOperator::Pow,
+    //         rhs: Box::new(Expression::IntLiteral(11)),
+    //     })),
+    // });
+
+    arena::intern("(2 ** 4)".into());
+    let e = pr.parse_expression().unwrap();
+    println!("{}", e);
+
+    exit(0);
     // once main is done parsing cli arguments, we move execution to the
     // appropriate runners. These runners never return.
     if let Some(path) = args.input.as_deref() {
@@ -83,5 +99,5 @@ fn run_prompt(mut pr: Parser) -> ! {
 
 fn run(pr: &mut Parser, source: String) {
     arena::intern(source);
-    println!("{:?}", pr.match_un_expression());
+    // println!("{:?}", pr.match_un_expression());
 }

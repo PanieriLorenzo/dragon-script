@@ -99,11 +99,13 @@ pub fn dump() -> String {
     STRING_ARENA.iter().collect()
 }
 
+#[derive(Clone)]
 pub struct Reader {
     pub current: Span,
     boundary: ReaderBounds,
 }
 
+#[derive(Clone)]
 enum ReaderBounds {
     Absolute,
     Relative(Span),

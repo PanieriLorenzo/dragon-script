@@ -2,92 +2,98 @@ use crate::{
     arena::{Reader, Span},
     error_handler as eh,
     lexer::{Lexer, Token, TokenType as TT},
+    lookahead::{lookahead, Lookahead},
 };
 use itertools::{multipeek, Itertools, MultiPeek, PeekingNext};
 use std::{fmt::Display, iter::Filter};
 use sugars::boxed;
 
+use anyhow::{Context, Error, Result};
+
+mod ast;
+pub use ast::*;
+
 trait TokenStream = Iterator<Item = Token>;
-trait Matcher = FnMut(Parser) -> Option<ParseTreeNodeType>;
 
 ///
 /// # Method Naming Convention:
-/// - `parse`: consumes tokens from the stream, returns a result with the parsed node
-/// - `drop`: consumes tokens from the stream, returns an empty result
-/// - `match`: does not consume the tokens, peek head is reset if it doesn't match, returns optional parsed node
-/// - `check`: does not consume the tokens, always advances head, returns bool
-/// - `lookahead`: does not consume the tokens, always resets peek head, returns a boolean
-pub struct Parser(MultiPeek<Lexer>);
+/// - `parse`: on fail doesn't consume tokens and returns error with context
+/// - `match`: never consumes tokens, only advances lookahead, returns option
+pub struct Parser(Lookahead<Lexer>);
 
 impl Parser {
     pub fn new(lx: Lexer) -> Self {
-        Self(lx.multipeek())
+        Self(lookahead(lx))
     }
 
-    /*
-    UnExpression
-    = Minus, Factor
-    ;
-     */
-    pub fn match_un_expression(&mut self) -> Option<ParseTreeNode> {
-        let t = self.match_one(TT::Minus)?;
-        let factor = self.match_int_literal()?;
-        // Some(ParseTreeNodeType::UnExpression {
-        //     op: boxed!(ParseTreeNodeType::Neg),
-        //     factor: boxed!(factor),
-        // })
-        Some(ParseTreeNode {
-            ty: ParseTreeNodeType::UnExpression {
-                op: boxed!(ParseTreeNode {
-                    ty: ParseTreeNodeType::Neg,
-                    span: t.lexeme,
-                }),
-                factor: boxed!(factor.clone()),
-            },
-            span: t.lexeme + factor.span,
-        })
+    pub fn parse_expression(&mut self) -> Result<Expression> {
+        self.parse_power()
     }
 
-    /*
-    Factor
-    = Identifier
-    | IntLiteral
-    | LeftParen, Expression, RightParen
-    ;
-     */
-    pub fn match_int_literal(&mut self) -> Option<ParseTreeNode> {
+    pub fn parse_power(&mut self) -> Result<Expression> {
+        // TODO:
+        let lhs = self
+            .parse_primary()
+            .context("expected left-hand expression")?;
+        let _ = self.match_one(TT::Pow).context("expected **")?;
+        self.0.commit();
+        let rhs = self
+            .parse_primary()
+            .context("expected right-hand expression")?;
+        Ok(Expression::BinExpression(BinExpression {
+            lhs: Box::new(lhs),
+            op: BinOperator::Pow,
+            rhs: Box::new(rhs),
+        }))
+    }
+
+    pub fn parse_primary(&mut self) -> Result<Expression> {
+        if let Some(e) = self.match_int_literal() {
+            self.0.commit();
+            return Ok(e);
+        }
+
+        self.parse_grouping().context("expected grouping")
+    }
+
+    pub fn parse_grouping(&mut self) -> Result<Expression> {
+        self.parse_one(TT::LeftParen)?;
+        let e = self.parse_expression().context("expected expression")?;
+        self.parse_one(TT::RightParen)?;
+        Ok(e)
+    }
+
+    pub fn match_int_literal(&mut self) -> Option<Expression> {
         let t = self.match_one(TT::IntLit)?;
-        Some(ParseTreeNode {
-            ty: ParseTreeNodeType::IntLiteral,
-            span: t.lexeme,
-        })
+        Some(Expression::IntLiteral(t.lexeme))
     }
 
-    pub fn match_one(&mut self, tt: TT) -> Option<Token> {
+    fn parse_one(&mut self, tt: TT) -> Result<Token> {
+        let t = self
+            .match_one(tt)
+            .context(format!("expected {}, got {:?}", tt, self.0.current))?;
+        self.0.commit();
+        Ok(t)
+    }
+
+    fn match_one(&mut self, tt: TT) -> Option<Token> {
         match self.0.peek() {
-            Some(&ref t) if t.token_type == tt => Some(t.clone()),
+            Some(ref t) if t.token_type == tt => Some(t.clone()),
             _ => {
-                self.0.reset_peek();
+                self.0.reset();
                 None
             }
         }
     }
-}
 
-#[derive(Debug, Clone)]
-pub struct ParseTreeNode {
-    pub ty: ParseTreeNodeType,
-    pub span: Span,
-}
-
-#[derive(Debug, Clone)]
-pub enum ParseTreeNodeType {
-    Neg,
-    UnExpression {
-        op: Box<ParseTreeNode>,
-        factor: Box<ParseTreeNode>,
-    },
-    IntLiteral,
+    fn match_one_of(&mut self, tts: &[TT]) -> Option<Token> {
+        for &tt in tts {
+            if let o @ Some(_) = self.match_one(tt) {
+                return o;
+            }
+        }
+        None
+    }
 }
 
 // impl std::fmt::Display for ParseTreeNodeType {

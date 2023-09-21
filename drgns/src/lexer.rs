@@ -91,25 +91,14 @@ enum LexerMode {
     Normal,
 }
 
+#[derive(Clone)]
 pub struct Lexer {
     reader: Reader,
-    // the idea of using SmallVec is that in 99.99% of cases, you'll never nest
-    // your string interpolations more than 32 layers. Using SmallStack is easier
-    // than implementing my own stack-allocated stack with safe overflows. One
-    // less error to keep track of.
-    mode_stack: SmallVec<[LexerMode; 32]>,
 }
 
 impl Lexer {
     pub fn new(reader: Reader) -> Self {
-        Self {
-            reader,
-            mode_stack: vec![LexerMode::Normal].into(),
-        }
-    }
-
-    pub fn delim_depth(&self) -> usize {
-        self.mode_stack.len()
+        Self { reader }
     }
 
     /// lex a group of tokens that share a common prefix, for example
@@ -237,10 +226,7 @@ impl Iterator for Lexer {
         use LexerMode as LM;
         use TokenType as TT;
         loop {
-            let ot = match self.mode_stack.last() {
-                None => None,
-                Some(LM::Normal) => self.normal_mode_next(),
-            };
+            let ot = self.normal_mode_next();
             if ot.as_ref().is_some_and(|t| t.token_type != TT::Ignore) {
                 return ot;
             }

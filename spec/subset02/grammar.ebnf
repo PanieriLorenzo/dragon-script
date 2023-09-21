@@ -15,24 +15,28 @@ Assignment
     ;
 
 Expression
-    = BinExpression
-    | UnExpression
-    | Factor
+    = Power
     ;
 
-BinExpression
-    = Factor, Pow, Factor
-    | Factor, ( Mul | Div | Mod ), Factor
-    | Factor, ( Plus | Minus ), Factor
+Power
+    = Term, Pow, Term
     ;
 
-UnExpression
-    = Minus, Factor
+Term
+    = Factor, { (Minus | Plus), Factor }
     ;
-
 
 Factor
-    = Identifier
-    | IntLiteral
+    = Unary, { (Div | Mul | Mod), Unary }
+    ;
+
+Unary
+    = Minus, Unary
+    | Primary
+    ;
+
+Primary
+    = IntLiteral
+    | Identifier
     | LeftParen, Expression, RightParen
     ;
