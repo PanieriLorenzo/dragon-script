@@ -25,12 +25,12 @@ pub enum TokenType {
     RightParen,
     Comma,
     Plus,
-    Mod,
+    Percent,
     Minus,
 
     // one or more chars
-    Div, // or comment
-    Mul,
+    Slash, // or comment
+    Star,
     Pow,
 
     // two character
@@ -135,7 +135,7 @@ impl Lexer {
                 }
                 T::Ignore
             }
-            _ => T::Div,
+            _ => T::Slash,
         }
     }
 
@@ -181,13 +181,13 @@ impl Lexer {
             '(' => TT::RightParen,
             ',' => TT::Comma,
             '+' => TT::Plus,
-            '%' => TT::Mod,
+            '%' => TT::Percent,
             '-' => TT::Minus,
 
             // one or more chars
             '/' => self.lex_div_or_comment(), // or comment
             '*' => self
-                .lex_postfixes(&[(&[Some('*')], TT::Pow), (&[], TT::Mul)])
+                .lex_postfixes(&[(&[Some('*')], TT::Pow), (&[], TT::Star)])
                 .unwrap_or_else(|| eh::fatal_unreachable()),
 
             // two character
@@ -225,7 +225,7 @@ impl Iterator for Lexer {
     fn next(&mut self) -> Option<Self::Item> {
         use LexerMode as LM;
         use TokenType as TT;
-            let ot = self.normal_mode_next();
+        let ot = self.normal_mode_next();
         if ot.clone().is_some_and(|t| t.token_type == TT::Ignore) {
             return self.next();
         }

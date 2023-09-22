@@ -30,20 +30,45 @@ impl Parser {
         self.parse_power()
     }
 
+    pub fn parse_factor(&mut self) -> Result<Expression> {
+        let mut exp = self
+            .parse_power()
+            .context("expected left-hand expression")?;
+        while let Some(t) = self.match_one_of(&[TT::Star, TT::Slash, TT::Percent]) {
+            self.0.commit();
+            let rhs = self
+                .parse_power()
+                .context("expected right-hand expression")?;
+            exp = Expression::BE(BinExpression {
+                lhs: Box::new(exp),
+                op: match t.token_type {
+                    TT::Percent => BinOperator::Mod,
+                    TT::Slash => BinOperator::Div,
+                    TT::Star => BinOperator::Mul,
+                    _ => unreachable!(),
+                },
+                rhs: Box::new(rhs),
+            });
+        }
+        Ok(exp)
+    }
+
     pub fn parse_power(&mut self) -> Result<Expression> {
-        // TODO:
-        let lhs = self
+        let mut exp = self
             .parse_unary()
             .context("expected left-hand expression")?;
-        self.parse_one(TT::Pow)?;
-        let rhs = self
-            .parse_unary()
-            .context("expected right-hand expression")?;
-        Ok(Expression::BE(BinExpression {
-            lhs: Box::new(lhs),
-            op: BinOperator::Pow,
-            rhs: Box::new(rhs),
-        }))
+        while self.match_one(TT::Pow).is_some() {
+            self.0.commit();
+            let rhs = self
+                .parse_unary()
+                .context("expected right-hand expression")?;
+            exp = Expression::BE(BinExpression {
+                lhs: Box::new(exp),
+                op: BinOperator::Pow,
+                rhs: Box::new(rhs),
+            });
+        }
+        Ok(exp)
     }
 
     pub fn parse_unary(&mut self) -> Result<Expression> {
@@ -83,6 +108,15 @@ impl Parser {
         let t = self
             .match_one(tt)
             .context(format!("expected {}, got {:?}", tt, self.0.current))?;
+        self.0.commit();
+        Ok(t)
+    }
+
+    fn parse_one_of(&mut self, tts: &[TT]) -> Result<Token> {
+        let t = self.match_one_of(tts).context(format!(
+            "expected one of {:?}, got {:?}",
+            tts, self.0.current
+        ))?;
         self.0.commit();
         Ok(t)
     }

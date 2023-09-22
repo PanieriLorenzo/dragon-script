@@ -32,7 +32,8 @@ struct Args {
 
 fn main() -> ! {
     let args = <Args as clap::Parser>::parse();
-    let mut pr = Parser::new(Lexer::new(arena::Reader::new()));
+    let lx = Lexer::new(arena::Reader::new());
+    let mut pr = Parser::new(lx);
 
     // let e = Expression::BinExpression(BinExpression {
     //     lhs: Box::new(Expression::IntLiteral(42)),
@@ -44,11 +45,12 @@ fn main() -> ! {
     //     })),
     // });
 
-    arena::intern("-2 ** --4".into());
-    let e = pr.parse_expression().unwrap();
-    println!("{}", e);
+    arena::intern("".into());
 
-    exit(0);
+    // let e = pr.parse_expression().unwrap();
+    // println!("{}", e);
+
+    // exit(0);
     // once main is done parsing cli arguments, we move execution to the
     // appropriate runners. These runners never return.
     if let Some(path) = args.input.as_deref() {
@@ -99,5 +101,5 @@ fn run_prompt(mut pr: Parser) -> ! {
 
 fn run(pr: &mut Parser, source: String) {
     arena::intern(source);
-    // println!("{:?}", pr.match_un_expression());
+    println!("{:?}", pr.parse_expression().unwrap());
 }

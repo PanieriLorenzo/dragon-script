@@ -59,6 +59,9 @@ impl Display for BinExpression {
 #[derive(Debug, Clone)]
 pub enum BinOperator {
     Pow,
+    Mul,
+    Div,
+    Mod,
 }
 
 impl BinOperator {
@@ -71,6 +74,9 @@ impl Display for BinOperator {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Pow => write!(f, "**"),
+            Self::Mul => write!(f, "*"),
+            Self::Div => write!(f, "/"),
+            Self::Mod => write!(f, "%"),
         }
     }
 }
