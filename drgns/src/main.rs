@@ -101,5 +101,5 @@ fn run_prompt(mut pr: Parser) -> ! {
 
 fn run(pr: &mut Parser, source: String) {
     arena::intern(source);
-    println!("{:?}", pr.parse_expression().unwrap());
+    println!("{}", pr.parse_expression().unwrap());
 }

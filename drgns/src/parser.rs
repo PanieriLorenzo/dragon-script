@@ -27,7 +27,29 @@ impl Parser {
     }
 
     pub fn parse_expression(&mut self) -> Result<Expression> {
-        self.parse_power()
+        self.parse_term()
+    }
+
+    pub fn parse_term(&mut self) -> Result<Expression> {
+        let mut exp = self
+            .parse_factor()
+            .context("expected left-hand expression")?;
+        while let Some(t) = self.match_one_of(&[TT::Plus, TT::Minus]) {
+            self.0.commit();
+            let rhs = self
+                .parse_factor()
+                .context("expected right-hand expression")?;
+            exp = Expression::BE(BinExpression {
+                lhs: Box::new(exp),
+                op: match t.token_type {
+                    TT::Plus => BinOperator::Add,
+                    TT::Minus => BinOperator::Sub,
+                    _ => unreachable!(),
+                },
+                rhs: Box::new(rhs),
+            });
+        }
+        Ok(exp)
     }
 
     pub fn parse_factor(&mut self) -> Result<Expression> {

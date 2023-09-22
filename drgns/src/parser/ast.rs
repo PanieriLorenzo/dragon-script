@@ -62,6 +62,8 @@ pub enum BinOperator {
     Mul,
     Div,
     Mod,
+    Add,
+    Sub,
 }
 
 impl BinOperator {
@@ -77,6 +79,8 @@ impl Display for BinOperator {
             Self::Mul => write!(f, "*"),
             Self::Div => write!(f, "/"),
             Self::Mod => write!(f, "%"),
+            Self::Add => write!(f, "+"),
+            Self::Sub => write!(f, "-"),
         }
     }
 }
