@@ -10,11 +10,13 @@ anyhow = "1.0.75"
 append-only-vec = "0.1.2"
 clap = { version = "4.4.0", features = ["derive"] }
 itertools = "0.11.0"
+miette = { version = "5.10.0", features = ["fancy"] }
 serde = { version = "1.0.188", features = ["derive"] }
 smallvec = "1.11.0"
 strum = "0.25.0"
 strum_macros = "0.25.2"
 sugars = "3.0.0"
+thiserror = "1.0.48"
 
 [dev-dependencies]
 itertools = "0.11.0"

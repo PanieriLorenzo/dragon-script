@@ -15,6 +15,7 @@ use crate::lexer::Lexer;
 mod arena;
 mod data;
 mod error_handler;
+mod errors;
 mod lexer;
 mod lookahead;
 mod parser;

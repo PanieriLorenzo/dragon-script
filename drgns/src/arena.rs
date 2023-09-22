@@ -4,6 +4,7 @@ use std::{
 };
 
 use append_only_vec::AppendOnlyVec;
+use miette::SourceCode;
 
 use crate::assert_pre_condition;
 
@@ -16,6 +17,17 @@ pub struct Span {
     arena: &'static AppendOnlyVec<char>,
     pub start: usize,
     pub length: usize,
+}
+
+impl SourceCode for Span {
+    fn read_span<'a>(
+        &'a self,
+        span: &miette::SourceSpan,
+        context_lines_before: usize,
+        context_lines_after: usize,
+    ) -> Result<Box<dyn miette::SpanContents<'a> + 'a>, miette::MietteError> {
+        todo!()
+    }
 }
 
 impl Span {
