@@ -225,11 +225,10 @@ impl Iterator for Lexer {
     fn next(&mut self) -> Option<Self::Item> {
         use LexerMode as LM;
         use TokenType as TT;
-        loop {
             let ot = self.normal_mode_next();
-            if ot.as_ref().is_some_and(|t| t.token_type != TT::Ignore) {
-                return ot;
-            }
+        if ot.clone().is_some_and(|t| t.token_type == TT::Ignore) {
+            return self.next();
         }
+        ot
     }
 }
