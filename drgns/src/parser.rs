@@ -33,18 +33,29 @@ impl Parser {
     pub fn parse_power(&mut self) -> Result<Expression> {
         // TODO:
         let lhs = self
-            .parse_primary()
+            .parse_unary()
             .context("expected left-hand expression")?;
-        let _ = self.match_one(TT::Pow).context("expected **")?;
-        self.0.commit();
+        self.parse_one(TT::Pow)?;
         let rhs = self
-            .parse_primary()
+            .parse_unary()
             .context("expected right-hand expression")?;
-        Ok(Expression::BinExpression(BinExpression {
+        Ok(Expression::BE(BinExpression {
             lhs: Box::new(lhs),
             op: BinOperator::Pow,
             rhs: Box::new(rhs),
         }))
+    }
+
+    pub fn parse_unary(&mut self) -> Result<Expression> {
+        if self.match_one(TT::Minus).is_some() {
+            self.0.commit();
+            let rhs = self.parse_unary()?;
+            return Ok(Expression::UE(UnExpression {
+                op: UnOperator::Neg,
+                rhs: Box::new(rhs),
+            }));
+        }
+        self.parse_primary()
     }
 
     pub fn parse_primary(&mut self) -> Result<Expression> {

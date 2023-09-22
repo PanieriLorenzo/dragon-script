@@ -44,7 +44,7 @@ fn main() -> ! {
     //     })),
     // });
 
-    arena::intern("(2 ** 4)".into());
+    arena::intern("-2 ** --4".into());
     let e = pr.parse_expression().unwrap();
     println!("{}", e);
 
