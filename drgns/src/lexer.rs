@@ -177,8 +177,8 @@ impl Lexer {
         let c = self.reader.next()?;
         let token_type = match c {
             // unambiguously single-character tokens
-            ')' => TT::LeftParen,
-            '(' => TT::RightParen,
+            ')' => TT::RightParen,
+            '(' => TT::LeftParen,
             ',' => TT::Comma,
             '+' => TT::Plus,
             '%' => TT::Percent,
