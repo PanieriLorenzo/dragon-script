@@ -6,15 +6,15 @@ use miette::{SourceCode, SourceSpan};
 
 use crate::assert_pre_condition;
 
-use super::arena::StringArena;
+use super::arena::SourceArena;
 
 #[derive(Clone)]
-pub struct StringView {
-    pub arena: Weak<StringArena>,
+pub struct SourceView {
+    pub arena: Weak<SourceArena>,
     pub span: SourceSpan,
 }
 
-impl SourceCode for StringView {
+impl SourceCode for SourceView {
     fn read_span<'a>(
         &'a self,
         span: &miette::SourceSpan,
@@ -25,7 +25,7 @@ impl SourceCode for StringView {
     }
 }
 
-impl StringView {
+impl SourceView {
     pub fn grow(&mut self) {
         self.span = SourceSpan::from((self.span.offset(), self.span.len() + 1));
     }
@@ -79,7 +79,7 @@ impl StringView {
     }
 }
 
-impl Debug for StringView {
+impl Debug for SourceView {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Span")
             .field("arena", &"omitted")
@@ -89,7 +89,7 @@ impl Debug for StringView {
     }
 }
 
-impl Display for StringView {
+impl Display for SourceView {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let slice = self.clone().into_string();
         f.write_str(&*slice);
@@ -97,7 +97,7 @@ impl Display for StringView {
     }
 }
 
-impl Add for StringView {
+impl Add for SourceView {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {

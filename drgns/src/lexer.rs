@@ -8,8 +8,8 @@ use smallvec::SmallVec;
 use strum_macros::EnumIter;
 
 use crate::{
-    arena::{Reader, SpanOld},
     error_handler as eh,
+    source::{Reader, SourceView},
 };
 
 #[cfg(test)]
@@ -67,7 +67,7 @@ impl std::fmt::Display for TokenType {
 #[derive(Clone, Debug)]
 pub struct Token {
     pub token_type: TokenType,
-    pub lexeme: SpanOld,
+    pub lexeme: SourceView,
 }
 
 impl Display for Token {
@@ -160,7 +160,7 @@ impl Lexer {
             self.reader.next();
         }
 
-        let text = self.reader.current.into_string();
+        let text = self.reader.current.clone().into_string();
         if let Some(type_) = init_keywords()
             .read()
             .unwrap_or_else(|_| eh::fatal_generic("poisoned lock"))

@@ -4,7 +4,7 @@ use std::{
     sync::{OnceLock, RwLock},
 };
 
-use crate::arena::{intern, Reader};
+use crate::source::{Reader, SourceArena};
 
 use super::{Lexer, OnceMap, TokenType};
 
@@ -78,15 +78,4 @@ macro_rules! two_char_strings {
         let all_ascii = "\n\r\t !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~".to_string();
         iproduct!(all_ascii.clone().chars(), all_ascii.clone().chars()).map(|(s, t)| format!("{}{}", s, t))
     }};
-}
-
-pub fn make_lexer() -> Lexer {
-    let mut lx = Lexer::new(Reader::new());
-    // pad to avoid interference as arena is not reset
-    intern("\n    ".to_string());
-    loop {
-        if let None = lx.next() {
-            return lx;
-        }
-    }
 }

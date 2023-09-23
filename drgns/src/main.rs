@@ -9,17 +9,23 @@ use clap;
 use error_handler as eh;
 use lexer::TokenType;
 use parser::{BinExpression, Expression, Parser};
-use std::{io::Write, process::exit};
+use source::SourceArena;
+use std::{
+    cell::OnceCell,
+    io::Write,
+    process::exit,
+    sync::{Arc, OnceLock, RwLock},
+};
 
 use crate::lexer::Lexer;
 
-mod arena;
 mod data;
 mod error_handler;
 mod errors;
 mod lexer;
 mod lookahead;
 mod parser;
+mod source;
 
 // TODO: overwrite built-in error handling for consistent style
 #[derive(clap::Parser, Debug)]
@@ -34,7 +40,8 @@ struct Args {
 
 fn main() -> ! {
     let args = <Args as clap::Parser>::parse();
-    let lx = Lexer::new(arena::Reader::new());
+    let mut src = Arc::new(SourceArena::new());
+    let lx = Lexer::new(source::Reader::from_arena(&src));
     let mut pr = Parser::new(lx);
 
     // let e = Expression::BinExpression(BinExpression {
@@ -47,8 +54,6 @@ fn main() -> ! {
     //     })),
     // });
 
-    arena::intern("".into());
-
     // let e = pr.parse_expression().unwrap();
     // println!("{}", e);
 
@@ -57,14 +62,14 @@ fn main() -> ! {
     // appropriate runners. These runners never return.
     if let Some(path) = args.input.as_deref() {
         // run in batch mode
-        run_file(pr, path);
+        run_file(src, pr, path);
     } else {
         // run in REPL mode
-        run_prompt(pr);
+        run_prompt(src, pr);
     }
 }
 
-fn run_file(mut pr: Parser, path: &str) -> ! {
+fn run_file(src: Arc<SourceArena>, mut pr: Parser, path: &str) -> ! {
     // define an error handler here for convenience
     let errexit = || -> ! {
         std::process::exit(eh::display_errors());
@@ -80,11 +85,11 @@ fn run_file(mut pr: Parser, path: &str) -> ! {
             _ => eh::fatal_unreachable(),
         },
     };
-    run(&mut pr, source);
+    run(&src, &mut pr, source);
     errexit();
 }
 
-fn run_prompt(mut pr: Parser) -> ! {
+fn run_prompt(src: Arc<SourceArena>, mut pr: Parser) -> ! {
     loop {
         // TODO: fancy prompt
         //print!("{}> ", lx.delim_depth() - 1);
@@ -96,12 +101,12 @@ fn run_prompt(mut pr: Parser) -> ! {
         std::io::stdin().read_line(&mut input).unwrap_or_else(|_| {
             eh::fatal_io_generic("stdout cannot be read");
         });
-        run(&mut pr, input);
+        run(&src, &mut pr, input);
         eh::display_errors();
     }
 }
 
-fn run(pr: &mut Parser, source: String) {
-    arena::intern(source);
+fn run(src: &Arc<SourceArena>, pr: &mut Parser, input: String) {
+    src.intern(input);
     println!("{}", pr.parse_expression().unwrap());
 }

@@ -1,22 +1,30 @@
+use std::sync::Arc;
+
 use strum::IntoEnumIterator;
 
-use crate::{arena::intern, two_char_strings};
-
-use super::{
-    test_utils::{make_lexer, tokens_2_str},
-    TokenType,
+use crate::{
+    source::{Reader, SourceArena},
+    two_char_strings,
 };
+
+use super::{test_utils::tokens_2_str, Lexer, TokenType};
 
 use itertools::iproduct;
 
+fn make_context() -> (Arc<SourceArena>, Lexer) {
+    let src = Arc::new(SourceArena::new());
+    let lx = Lexer::new(Reader::from_arena(&src));
+    (src, lx)
+}
+
 #[test]
 fn lex_single_tokens() {
-    let mut lx = make_lexer();
+    let (src, mut lx) = make_context();
 
     // actual test
     for tt in TokenType::iter() {
-        intern(tokens_2_str(tt).to_string());
-        intern(" ".to_string());
+        src.intern(tokens_2_str(tt).to_string());
+        src.intern(" ".to_string());
         assert_eq!(lx.next().unwrap().token_type, tt);
         assert_eq!(lx.next().unwrap().token_type, TokenType::Ignore);
     }
@@ -24,13 +32,13 @@ fn lex_single_tokens() {
 
 #[test]
 fn lex_token_pairs() {
-    let mut lx = make_lexer();
+    let (src, mut lx) = make_context();
 
     for (tt1, tt2) in iproduct!(TokenType::iter(), TokenType::iter()) {
-        intern(tokens_2_str(tt1).to_string());
-        intern(" ".to_string());
-        intern(tokens_2_str(tt2).to_string());
-        intern(" ".to_string());
+        src.intern(tokens_2_str(tt1).to_string());
+        src.intern(" ".to_string());
+        src.intern(tokens_2_str(tt2).to_string());
+        src.intern(" ".to_string());
         assert_eq!(lx.next().unwrap().token_type, tt1);
         assert_eq!(lx.next().unwrap().token_type, TokenType::Ignore);
         assert_eq!(lx.next().unwrap().token_type, tt2);
@@ -40,9 +48,9 @@ fn lex_token_pairs() {
 
 #[test]
 fn lex_arbitrary_text() {
-    let lx = make_lexer();
+    let (src, mut lx) = make_context();
     for s in two_char_strings!() {
-        intern(s);
+        src.intern(s);
     }
     // just asserting that it lexes all the way through
     for _ in lx {}

@@ -5,5 +5,5 @@ use thiserror::Error;
 #[error("hmm")]
 pub struct DragonError {
     #[source_code]
-    src: crate::arena::SpanOld,
+    src: crate::source::SourceView,
 }

@@ -6,20 +6,24 @@ use std::{
 
 use miette::{LabeledSpan, SourceOffset, SourceSpan};
 
-use super::span::StringView;
+use super::view::SourceView;
 
 #[derive(Debug)]
-pub struct StringArena(RwLock<Vec<char>>);
+pub struct SourceArena(RwLock<Vec<char>>);
 
-impl StringArena {
+impl SourceArena {
+    pub fn new() -> Self {
+        Self(RwLock::new(vec![]))
+    }
+
     /// Intern a single string of raw source code, including newlines.
     ///
     /// You may intern parts of a single line, or multiple lines as well.
-    pub fn intern(self: &Arc<Self>, src: String) -> StringView {
+    pub fn intern(self: &Arc<Self>, src: String) -> SourceView {
         let start: SourceOffset = self.len().into();
         self.0.write().unwrap().extend(src.chars());
-        StringView {
-            arena: Arc::<StringArena>::downgrade(self),
+        SourceView {
+            arena: Arc::<SourceArena>::downgrade(self),
             span: SourceSpan::new(start, src.len().into()),
         }
     }
@@ -39,14 +43,14 @@ impl StringArena {
 
 #[derive(Clone)]
 pub struct Reader {
-    pub current: StringView,
+    pub current: SourceView,
     boundary: ReaderBounds,
 }
 
 #[derive(Clone)]
 enum ReaderBounds {
     Absolute,
-    Relative(StringView),
+    Relative(SourceView),
 }
 
 /// fast read-only iterator over arena
@@ -56,9 +60,9 @@ enum ReaderBounds {
 /// lexing.
 impl Reader {
     /// crate a new reader that traverses the entire arena from the start
-    pub fn from_arena(s: &Arc<StringArena>) -> Self {
+    pub fn from_arena(s: &Arc<SourceArena>) -> Self {
         Self {
-            current: StringView {
+            current: SourceView {
                 arena: Arc::downgrade(&s),
                 span: SourceSpan::new(0.into(), 0.into()),
             },
@@ -66,9 +70,9 @@ impl Reader {
         }
     }
 
-    pub fn from_span(s: StringView) -> Self {
+    pub fn from_span(s: SourceView) -> Self {
         Self {
-            current: StringView {
+            current: SourceView {
                 arena: s.arena.clone(),
                 span: SourceSpan::new(0.into(), 0.into()),
             },
@@ -131,7 +135,7 @@ impl Reader {
         Some(ret)
     }
 
-    pub fn advance_tail(&mut self) -> StringView {
+    pub fn advance_tail(&mut self) -> SourceView {
         let ret = self.current.clone();
         self.current.pull_tail();
         ret

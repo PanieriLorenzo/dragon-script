@@ -1,12 +1,12 @@
 use std::fmt::Display;
 
-use crate::arena::SpanOld;
+use crate::source::SourceView;
 
 #[derive(Debug, Clone)]
 pub enum Expression {
     BE(BinExpression),
     UE(UnExpression),
-    IntLiteral(SpanOld),
+    IntLiteral(SourceView),
 }
 
 impl Expression {
@@ -29,7 +29,7 @@ impl Display for Expression {
             Self::UE(ue) => {
                 write!(f, "{}", ue)
             }
-            Self::IntLiteral(i) => write!(f, "{}", i.into_string()),
+            Self::IntLiteral(i) => write!(f, "{}", i.clone().into_string()),
         }
     }
 }
