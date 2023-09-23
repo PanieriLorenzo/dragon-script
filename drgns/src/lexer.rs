@@ -8,7 +8,7 @@ use smallvec::SmallVec;
 use strum_macros::EnumIter;
 
 use crate::{
-    arena::{Reader, Span},
+    arena::{Reader, SpanOld},
     error_handler as eh,
 };
 
@@ -67,7 +67,7 @@ impl std::fmt::Display for TokenType {
 #[derive(Clone, Debug)]
 pub struct Token {
     pub token_type: TokenType,
-    pub lexeme: Span,
+    pub lexeme: SpanOld,
 }
 
 impl Display for Token {

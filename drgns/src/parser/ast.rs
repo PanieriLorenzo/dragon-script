@@ -1,12 +1,12 @@
 use std::fmt::Display;
 
-use crate::arena::Span;
+use crate::arena::SpanOld;
 
 #[derive(Debug, Clone)]
 pub enum Expression {
     BE(BinExpression),
     UE(UnExpression),
-    IntLiteral(Span),
+    IntLiteral(SpanOld),
 }
 
 impl Expression {

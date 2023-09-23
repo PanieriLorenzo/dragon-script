@@ -8,18 +8,22 @@ use miette::SourceCode;
 
 use crate::assert_pre_condition;
 
+mod arena;
+mod span;
+
 // TODO: move into struct when you are ready to deal with the lifetime
 //       mess... ugh...
 static STRING_ARENA: AppendOnlyVec<char> = AppendOnlyVec::new();
 
+#[deprecated]
 #[derive(Clone, Copy)]
-pub struct Span {
+pub struct SpanOld {
     arena: &'static AppendOnlyVec<char>,
     pub start: usize,
     pub length: usize,
 }
 
-impl SourceCode for Span {
+impl SourceCode for SpanOld {
     fn read_span<'a>(
         &'a self,
         span: &miette::SourceSpan,
@@ -30,7 +34,7 @@ impl SourceCode for Span {
     }
 }
 
-impl Span {
+impl SpanOld {
     pub fn into_string(self) -> String {
         self.arena
             .iter()
@@ -60,7 +64,7 @@ impl Span {
     }
 }
 
-impl Debug for Span {
+impl Debug for SpanOld {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Span")
             .field("arena", &"omitted")
@@ -70,14 +74,14 @@ impl Debug for Span {
     }
 }
 
-impl Display for Span {
+impl Display for SpanOld {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let slice = self.into_string();
         write!(f, "{:?}", slice)
     }
 }
 
-impl Add for Span {
+impl Add for SpanOld {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -91,7 +95,8 @@ impl Add for Span {
 }
 
 /// Intern a single string containing multiple lines of unprcessed source
-pub fn intern(src: String) -> Span {
+#[deprecated]
+pub fn intern(src: String) -> SpanOld {
     let start = STRING_ARENA.len();
     let length = src.len();
 
@@ -99,7 +104,7 @@ pub fn intern(src: String) -> Span {
         STRING_ARENA.push(c);
     });
 
-    Span {
+    SpanOld {
         arena: &STRING_ARENA,
         start,
         length,
@@ -107,20 +112,21 @@ pub fn intern(src: String) -> Span {
 }
 
 /// Dump contents of arena
+#[deprecated]
 pub fn dump() -> String {
     STRING_ARENA.iter().collect()
 }
 
 #[derive(Clone)]
 pub struct Reader {
-    pub current: Span,
+    pub current: SpanOld,
     boundary: ReaderBounds,
 }
 
 #[derive(Clone)]
 enum ReaderBounds {
     Absolute,
-    Relative(Span),
+    Relative(SpanOld),
 }
 
 /// fast read-only iterator over arena
@@ -132,7 +138,7 @@ impl Reader {
     /// crate a new reader that traverses the entire arena from the start
     pub fn new() -> Self {
         Self {
-            current: Span {
+            current: SpanOld {
                 arena: &STRING_ARENA,
                 start: 0,
                 length: 0,
@@ -141,9 +147,9 @@ impl Reader {
         }
     }
 
-    pub fn from_span(s: Span) -> Self {
+    pub fn from_span(s: SpanOld) -> Self {
         Self {
-            current: Span {
+            current: SpanOld {
                 arena: s.arena,
                 start: 0,
                 length: 0,
@@ -193,7 +199,7 @@ impl Reader {
         Some(ret)
     }
 
-    pub fn advance_tail(&mut self) -> Span {
+    pub fn advance_tail(&mut self) -> SpanOld {
         let ret = self.current;
         self.current.start = self.head_idx();
         self.current.length = 0;

@@ -1,5 +1,5 @@
 use crate::{
-    arena::{Reader, Span},
+    arena::{Reader, SpanOld},
     error_handler as eh,
     lexer::{Lexer, Token, TokenType as TT},
     lookahead::{lookahead, Lookahead},

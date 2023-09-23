@@ -1,6 +1,7 @@
 #![allow(clippy::zero_prefixed_literal)]
 // TODO: remove in production
 #![allow(dead_code)]
+#![warn(clippy::unwrap_used)]
 #![feature(trait_alias)]
 #![feature(type_alias_impl_trait)]
 
