@@ -93,20 +93,20 @@ impl Interpreter {
 
     fn run(&mut self, input: String) {
         self.src.intern(input);
-        println!("{}", self.pr.parse_expression().unwrap());
+        self.pr.drop_all();
     }
 }
 
 fn main() -> ! {
-    std::env::set_var("RUST_LOG", "debug");
+    std::env::set_var("RUST_LOG", "trace");
     env_logger::builder().format_timestamp(None).init();
     let src = Rc::new(SourceArena::new());
     let eh = Rc::new(ErrorHandler::new());
     let mut i = Interpreter {
         args: <Args as clap::Parser>::parse(),
         src: src.clone(),
-        pr: Parser::new(Lexer::new(source::Reader::from_arena(&src), &eh)),
-        eh: Rc::new(ErrorHandler::new()),
+        pr: Parser::new(Lexer::new(source::Reader::from_arena(&src), &eh), &eh),
+        eh: eh.clone(),
     };
 
     i.start();

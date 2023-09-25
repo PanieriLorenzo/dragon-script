@@ -34,7 +34,7 @@ where
     type Item = I::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.branch.next();
+        self.current = self.branch.next();
         self.main.next()
     }
 }

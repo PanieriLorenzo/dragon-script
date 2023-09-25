@@ -34,12 +34,16 @@ use std::{
     },
 };
 
-use ariadne::Report;
+use ariadne::{Label, Report, Source};
+use log::debug;
 use thiserror::Error;
 
-use crate::source::SourceView;
+use crate::{
+    lexer::{Token, TokenType},
+    source::SourceView,
+};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[repr(u16)]
 enum ErrorType {
     SyntaxError = 0x1,
@@ -53,8 +57,19 @@ pub struct DragonError {
     span: SourceView,
 }
 
+impl DragonError {
+    fn report(&self) -> Result<(), std::io::Error> {
+        Report::build(ariadne::ReportKind::Error, (), 12)
+            .with_code(self.ty.clone() as u16)
+            .with_message(self.msg.clone())
+            .with_label(Label::new(self.span.span.clone()).with_message("here"))
+            .finish()
+            .eprint(Source::from(self.span.arena.upgrade().unwrap().to_string()))
+    }
+}
+
 pub struct ErrorHandler {
-    had_error: bool,
+    had_error: AtomicBool,
     errors: Cell<Vec<DragonError>>,
     warnings: Cell<Vec<DragonError>>,
 }
@@ -62,7 +77,7 @@ pub struct ErrorHandler {
 impl ErrorHandler {
     pub fn new() -> Self {
         Self {
-            had_error: false,
+            had_error: AtomicBool::new(false),
             errors: Cell::new(vec![]),
             warnings: Cell::new(vec![]),
         }
@@ -71,14 +86,7 @@ impl ErrorHandler {
     pub fn report_all(self: &Rc<Self>) {
         let inner = self.errors.take();
         for e in inner.iter() {
-            // NOTE: safe, according to https://doc.rust-lang.org/reference/items/enumerations.html#pointer-casting
-            let discriminant = unsafe { *(e as *const DragonError as *const u16) };
-            // Report::build(ariadne::ReportKind::Error, "REPL", 12)
-            //     .with_code(discriminant)
-            //     .with_message(e.to_string())
-            //     .with_label(match e {
-            //         DragonError::SyntaxError(s, _) => todo!(),
-            //     });
+            e.report().unwrap();
         }
     }
 
@@ -89,17 +97,43 @@ impl ErrorHandler {
             ty: ErrorType::SyntaxError,
             span,
         });
+        self.had_error.store(true, Ordering::Relaxed);
         self.errors.set(errors);
     }
 
-    pub fn unexpected_char(mut self: Rc<Self>, span: SourceView, c: char) {
+    pub fn unexpected_char(self: Rc<Self>, span: SourceView, c: char) {
         let mut errors = self.errors.take();
+        log::trace!("unexpected_char");
         errors.push(DragonError {
-            msg: format!("unexpected character: {}", c),
+            msg: format!("unexpected character: '{}'", c),
             ty: ErrorType::SyntaxError,
             span,
         });
+        self.had_error.store(true, Ordering::Relaxed);
         self.errors.set(errors);
+    }
+
+    pub fn unexpected_token(
+        self: Rc<Self>,
+        span: SourceView,
+        expected: &[TokenType],
+        got: TokenType,
+    ) {
+        let mut errors = self.errors.take();
+        errors.push(DragonError {
+            msg: format!("unexpected token: {}, expected one of {:?}", got, expected),
+            ty: ErrorType::SyntaxError,
+            span,
+        })
+    }
+
+    pub fn unexpected_end_of_input(self: Rc<Self>, span: SourceView) {
+        let mut errors = self.errors.take();
+        errors.push(DragonError {
+            msg: format!("unexpected end of input"),
+            ty: ErrorType::SyntaxError,
+            span,
+        })
     }
 }
 

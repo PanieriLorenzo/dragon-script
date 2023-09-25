@@ -218,6 +218,7 @@ impl Lexer {
             c if c.is_ascii_alphabetic() || c == '_' => self.lex_identifier(),
 
             _ => {
+                log::trace!("unmatched char");
                 self.eh
                     .clone()
                     .unexpected_char(self.reader.current.clone(), c);

@@ -21,11 +21,11 @@ impl SourceArena {
     ///
     /// You may intern parts of a single line, or multiple lines as well.
     pub fn intern(self: &Rc<Self>, src: String) -> SourceView {
-        let start: SourceOffset = self.len().into();
+        let start = self.len();
         self.0.write().unwrap().extend(src.chars());
         SourceView {
             arena: Rc::<SourceArena>::downgrade(self),
-            span: SourceSpan::new(start, src.len().into()),
+            span: start..(start + src.len()),
         }
     }
 
@@ -39,6 +39,13 @@ impl SourceArena {
 
     pub fn inner(&self) -> RwLockReadGuard<'_, Vec<char>> {
         self.0.read().unwrap()
+    }
+}
+
+impl Display for SourceArena {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s: String = self.inner().iter().collect();
+        write!(f, "{}", s)
     }
 }
 
@@ -65,7 +72,7 @@ impl Reader {
         Self {
             current: SourceView {
                 arena: Rc::downgrade(&s),
-                span: SourceSpan::new(0.into(), 0.into()),
+                span: 0..0,
             },
             boundary: ReaderBounds::Absolute,
         }
@@ -75,7 +82,7 @@ impl Reader {
         Self {
             current: SourceView {
                 arena: s.arena.clone(),
-                span: SourceSpan::new(0.into(), 0.into()),
+                span: 0..0,
             },
             boundary: ReaderBounds::Relative(s),
         }
@@ -84,7 +91,7 @@ impl Reader {
     pub fn abs_bounds(&self) -> (usize, usize) {
         match &self.boundary {
             ReaderBounds::Absolute => (0, self.current.arena.upgrade().unwrap().len()),
-            ReaderBounds::Relative(s) => (s.span.offset(), s.span.offset() + s.span.len()),
+            ReaderBounds::Relative(s) => (s.span.start, s.span.end),
         }
     }
 

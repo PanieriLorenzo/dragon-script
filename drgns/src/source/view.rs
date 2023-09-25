@@ -11,36 +11,36 @@ use super::arena::SourceArena;
 #[derive(Clone)]
 pub struct SourceView {
     pub arena: Weak<SourceArena>,
-    pub span: SourceSpan,
+    pub span: std::ops::Range<usize>,
 }
 
 impl SourceView {
     pub fn from_arena(arena: &Rc<SourceArena>) -> Self {
         Self {
             arena: Rc::downgrade(arena),
-            span: SourceSpan::from((0, arena.len())),
+            span: 0..arena.len(),
         }
     }
 
     pub fn grow(&mut self) {
-        self.span = SourceSpan::from((self.span.offset(), self.span.len() + 1));
+        self.span = self.span.start..(self.span.end + 1); //SourceSpan::from((self.span.offset(), self.span.len() + 1));
     }
 
     /// Increment offset up to current end, and reset length to 0
     pub fn pull_tail(&mut self) {
-        self.span = SourceSpan::from((self.end(), 0));
+        self.span = self.span.end..self.span.end; //SourceSpan::from((self.end(), 0));
     }
 
     pub fn start(&self) -> usize {
-        self.span.offset()
+        self.span.start
     }
 
     pub fn len(&self) -> usize {
-        self.span.len()
+        self.span.end - self.span.start
     }
 
     pub fn end(&self) -> usize {
-        self.span.offset() + self.span.len()
+        self.span.end
     }
 
     pub fn into_string(self) -> String {
@@ -98,11 +98,9 @@ impl Add for SourceView {
 
     fn add(self, rhs: Self) -> Self::Output {
         assert_pre_condition!(self.start() <= rhs.start() && self.end() <= rhs.end());
-        let new_start = self.span.offset();
-        let new_len = rhs.len() - new_start;
         Self {
             arena: self.arena,
-            span: SourceSpan::from((new_start, new_len)),
+            span: self.span.start..rhs.span.end,
         }
     }
 }
