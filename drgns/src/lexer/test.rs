@@ -1,8 +1,9 @@
-use std::sync::Arc;
+use std::rc::Rc;
 
 use strum::IntoEnumIterator;
 
 use crate::{
+    eh::ErrorHandler,
     source::{Reader, SourceArena},
     two_char_strings,
 };
@@ -11,15 +12,16 @@ use super::{test_utils::tokens_2_str, Lexer, TokenType};
 
 use itertools::iproduct;
 
-fn make_context() -> (Arc<SourceArena>, Lexer) {
-    let src = Arc::new(SourceArena::new());
-    let lx = Lexer::new(Reader::from_arena(&src));
-    (src, lx)
+fn make_context() -> (Rc<SourceArena>, Rc<ErrorHandler>, Lexer) {
+    let src = Rc::new(SourceArena::new());
+    let eh = Rc::new(ErrorHandler::new());
+    let lx = Lexer::new(Reader::from_arena(&src), &eh);
+    (src, eh, lx)
 }
 
 #[test]
 fn lex_single_tokens() {
-    let (src, mut lx) = make_context();
+    let (src, mut eh, mut lx) = make_context();
 
     // actual test
     for tt in TokenType::iter() {
@@ -32,7 +34,7 @@ fn lex_single_tokens() {
 
 #[test]
 fn lex_token_pairs() {
-    let (src, mut lx) = make_context();
+    let (src, mut eh, mut lx) = make_context();
 
     for (tt1, tt2) in iproduct!(TokenType::iter(), TokenType::iter()) {
         src.intern(tokens_2_str(tt1).to_string());
@@ -48,7 +50,7 @@ fn lex_token_pairs() {
 
 #[test]
 fn lex_arbitrary_text() {
-    let (src, mut lx) = make_context();
+    let (src, mut eh, mut lx) = make_context();
     for s in two_char_strings!() {
         src.intern(s);
     }

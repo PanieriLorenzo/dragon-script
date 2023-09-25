@@ -8,8 +8,11 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.75"
 append-only-vec = "0.1.2"
+ariadne = "0.3.0"
 clap = { version = "4.4.0", features = ["derive"] }
+env_logger = "0.10.0"
 itertools = "0.11.0"
+log = "0.4.20"
 miette = { version = "5.10.0", features = ["fancy"] }
 serde = { version = "1.0.188", features = ["derive"] }
 smallvec = "1.11.0"
@@ -17,6 +20,7 @@ strum = "0.25.0"
 strum_macros = "0.25.2"
 sugars = "3.0.0"
 thiserror = "1.0.48"
+yansi = "0.5.1"
 
 [dev-dependencies]
 itertools = "0.11.0"

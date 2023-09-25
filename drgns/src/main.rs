@@ -5,18 +5,14 @@
 #![feature(trait_alias)]
 #![feature(type_alias_impl_trait)]
 
+use ariadne::{sources, Report, ReportKind};
 use clap;
 use error_handler as eh;
-use errors::DragonError;
 use lexer::TokenType;
+use log::debug;
 use parser::{BinExpression, Expression, Parser};
 use source::{Reader, SourceArena, SourceView};
-use std::{
-    cell::OnceCell,
-    io::Write,
-    process::exit,
-    sync::{Arc, OnceLock, RwLock},
-};
+use std::{cell::OnceCell, io::Write, process::exit, rc::Rc, sync::RwLock};
 
 use crate::lexer::Lexer;
 
@@ -25,7 +21,6 @@ use miette::Result;
 mod data;
 mod error_handler;
 use error_handler::ErrorHandler;
-mod errors;
 mod lexer;
 mod lookahead;
 mod parser;
@@ -44,18 +39,18 @@ struct Args {
 
 struct Interpreter {
     args: Args,
-    src: Arc<SourceArena>,
+    src: Rc<SourceArena>,
     pr: Parser,
-    eh: Arc<ErrorHandler>,
+    eh: Rc<ErrorHandler>,
 }
 
 impl Interpreter {
     fn start(&mut self) -> ! {
         if let Some(path) = self.args.input.clone().as_deref() {
-            // run in batch mode
+            debug!("running in batch mode");
             self.run_file(path);
         } else {
-            // run in REPL mode
+            debug!("running in REPL mode");
             self.run_prompt();
         }
     }
@@ -70,10 +65,9 @@ impl Interpreter {
             Ok(src) => src,
             Err(err) => match err.kind() {
                 std::io::ErrorKind::NotFound => {
-                    eh::err_io_not_found(path);
-                    errexit();
+                    fatal!(format!("path '{}' does not exist", path));
                 }
-                _ => eh::fatal_unreachable(),
+                _ => assert_unreachable!(),
             },
         };
         self.run(source);
@@ -86,14 +80,14 @@ impl Interpreter {
             //print!("{}> ", lx.delim_depth() - 1);
             print!("> ");
             std::io::stdout().flush().unwrap_or_else(|_| {
-                eh::fatal_io_generic("stdout cannot be written to");
+                fatal!("stdout cannot be written to");
             });
             let mut input = String::new();
             std::io::stdin().read_line(&mut input).unwrap_or_else(|_| {
-                eh::fatal_io_generic("stdout cannot be read");
+                fatal!("stdout cannot be read");
             });
             self.run(input);
-            eh::display_errors();
+            self.eh.report_all();
         }
     }
 
@@ -104,12 +98,15 @@ impl Interpreter {
 }
 
 fn main() -> ! {
-    let src = Arc::new(SourceArena::new());
+    std::env::set_var("RUST_LOG", "debug");
+    env_logger::builder().format_timestamp(None).init();
+    let src = Rc::new(SourceArena::new());
+    let eh = Rc::new(ErrorHandler::new());
     let mut i = Interpreter {
         args: <Args as clap::Parser>::parse(),
         src: src.clone(),
-        pr: Parser::new(Lexer::new(source::Reader::from_arena(&src))),
-        eh: Arc::new(ErrorHandler::new()),
+        pr: Parser::new(Lexer::new(source::Reader::from_arena(&src), &eh)),
+        eh: Rc::new(ErrorHandler::new()),
     };
 
     i.start();

@@ -1,7 +1,8 @@
 use std::{
     convert::identity,
     fmt::Display,
-    sync::{Arc, RwLock, RwLockReadGuard},
+    rc::Rc,
+    sync::{RwLock, RwLockReadGuard},
 };
 
 use miette::{LabeledSpan, SourceOffset, SourceSpan};
@@ -19,11 +20,11 @@ impl SourceArena {
     /// Intern a single string of raw source code, including newlines.
     ///
     /// You may intern parts of a single line, or multiple lines as well.
-    pub fn intern(self: &Arc<Self>, src: String) -> SourceView {
+    pub fn intern(self: &Rc<Self>, src: String) -> SourceView {
         let start: SourceOffset = self.len().into();
         self.0.write().unwrap().extend(src.chars());
         SourceView {
-            arena: Arc::<SourceArena>::downgrade(self),
+            arena: Rc::<SourceArena>::downgrade(self),
             span: SourceSpan::new(start, src.len().into()),
         }
     }
@@ -60,10 +61,10 @@ enum ReaderBounds {
 /// lexing.
 impl Reader {
     /// crate a new reader that traverses the entire arena from the start
-    pub fn from_arena(s: &Arc<SourceArena>) -> Self {
+    pub fn from_arena(s: &Rc<SourceArena>) -> Self {
         Self {
             current: SourceView {
-                arena: Arc::downgrade(&s),
+                arena: Rc::downgrade(&s),
                 span: SourceSpan::new(0.into(), 0.into()),
             },
             boundary: ReaderBounds::Absolute,

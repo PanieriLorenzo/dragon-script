@@ -1,14 +1,18 @@
 use std::{
     collections::HashMap,
     fmt::Display,
-    sync::{OnceLock, RwLock},
+    rc::Rc,
+    sync::{OnceLock, RwLock, Weak},
 };
 
+use anyhow::Error;
 use smallvec::SmallVec;
 use strum_macros::EnumIter;
 
 use crate::{
-    error_handler as eh,
+    assert_unreachable,
+    eh::ErrorHandler,
+    error_handler as eh, internal_error,
     source::{Reader, SourceView},
 };
 
@@ -94,11 +98,15 @@ enum LexerMode {
 #[derive(Clone)]
 pub struct Lexer {
     reader: Reader,
+    eh: Rc<ErrorHandler>,
 }
 
 impl Lexer {
-    pub fn new(reader: Reader) -> Self {
-        Self { reader }
+    pub fn new(reader: Reader, eh: &Rc<ErrorHandler>) -> Self {
+        Self {
+            reader,
+            eh: eh.clone(),
+        }
     }
 
     /// lex a group of tokens that share a common prefix, for example
@@ -163,7 +171,7 @@ impl Lexer {
         let text = self.reader.current.clone().into_string();
         if let Some(type_) = init_keywords()
             .read()
-            .unwrap_or_else(|_| eh::fatal_generic("poisoned lock"))
+            .unwrap_or_else(|_| internal_error!("poisoned lock"))
             .get(text.as_str())
         {
             *type_
@@ -188,13 +196,15 @@ impl Lexer {
             '/' => self.lex_div_or_comment(), // or comment
             '*' => self
                 .lex_postfixes(&[(&[Some('*')], TT::Pow), (&[], TT::Star)])
-                .unwrap_or_else(|| eh::fatal_unreachable()),
+                .unwrap_or_else(|| assert_unreachable!()),
 
             // two character
             ':' => self
                 .lex_postfixes(&[(&[Some('=')], TT::ColonEquals)])
                 .unwrap_or_else(|| {
-                    eh::err_unexpected_character(c);
+                    self.eh
+                        .clone()
+                        .unexpected_char(self.reader.current.clone(), c);
                     TT::Unknown
                 }),
 
@@ -208,7 +218,9 @@ impl Lexer {
             c if c.is_ascii_alphabetic() || c == '_' => self.lex_identifier(),
 
             _ => {
-                eh::err_unexpected_character(c);
+                self.eh
+                    .clone()
+                    .unexpected_char(self.reader.current.clone(), c);
                 TT::Unknown
             }
         };
@@ -223,7 +235,6 @@ impl Iterator for Lexer {
     type Item = Token;
 
     fn next(&mut self) -> Option<Self::Item> {
-        use LexerMode as LM;
         use TokenType as TT;
         let ot = self.normal_mode_next();
         if ot.clone().is_some_and(|t| t.token_type == TT::Ignore) {

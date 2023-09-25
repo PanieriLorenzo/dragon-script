@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display};
 use std::ops::Add;
-use std::sync::{Arc, RwLockReadGuard, Weak};
+use std::rc::{Rc, Weak};
 
 use miette::{SourceCode, SourceSpan};
 
@@ -14,21 +14,10 @@ pub struct SourceView {
     pub span: SourceSpan,
 }
 
-impl SourceCode for SourceView {
-    fn read_span<'a>(
-        &'a self,
-        span: &miette::SourceSpan,
-        context_lines_before: usize,
-        context_lines_after: usize,
-    ) -> Result<Box<dyn miette::SpanContents<'a> + 'a>, miette::MietteError> {
-        todo!()
-    }
-}
-
 impl SourceView {
-    pub fn from_arena(arena: &Arc<SourceArena>) -> Self {
+    pub fn from_arena(arena: &Rc<SourceArena>) -> Self {
         Self {
-            arena: Arc::downgrade(arena),
+            arena: Rc::downgrade(arena),
             span: SourceSpan::from((0, arena.len())),
         }
     }
