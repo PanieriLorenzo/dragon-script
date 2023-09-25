@@ -34,22 +34,19 @@ impl Parser {
     }
 
     pub fn drop_all(&mut self) {
+        self.eh.clone().unexpected_end_of_input();
         while let Some(_) = self.lx.next() {}
     }
 
-    pub fn parse_expression(&mut self) -> Result<Expression> {
+    pub fn parse_expression(&mut self) -> Option<Expression> {
         self.parse_term()
     }
 
-    pub fn parse_term(&mut self) -> Result<Expression> {
-        let mut exp = self
-            .parse_factor()
-            .context("expected left-hand expression")?;
+    pub fn parse_term(&mut self) -> Option<Expression> {
+        let mut exp = self.parse_factor()?;
         while let Some(t) = self.match_one_of(&[TT::Plus, TT::Minus]) {
             self.lx.commit();
-            let rhs = self
-                .parse_factor()
-                .context("expected right-hand expression")?;
+            let rhs = self.parse_factor()?;
             exp = Expression::BE(BinExpression {
                 lhs: Box::new(exp),
                 op: match t.token_type {
@@ -60,18 +57,14 @@ impl Parser {
                 rhs: Box::new(rhs),
             });
         }
-        Ok(exp)
+        Some(exp)
     }
 
-    pub fn parse_factor(&mut self) -> Result<Expression> {
-        let mut exp = self
-            .parse_power()
-            .context("expected left-hand expression")?;
+    pub fn parse_factor(&mut self) -> Option<Expression> {
+        let mut exp = self.parse_power()?;
         while let Some(t) = self.match_one_of(&[TT::Star, TT::Slash, TT::Percent]) {
             self.lx.commit();
-            let rhs = self
-                .parse_power()
-                .context("expected right-hand expression")?;
+            let rhs = self.parse_power()?;
             exp = Expression::BE(BinExpression {
                 lhs: Box::new(exp),
                 op: match t.token_type {
@@ -83,32 +76,28 @@ impl Parser {
                 rhs: Box::new(rhs),
             });
         }
-        Ok(exp)
+        Some(exp)
     }
 
-    pub fn parse_power(&mut self) -> Result<Expression> {
-        let mut exp = self
-            .parse_unary()
-            .context("expected left-hand expression")?;
+    pub fn parse_power(&mut self) -> Option<Expression> {
+        let mut exp = self.parse_unary()?;
         while self.match_one(TT::Pow).is_some() {
             self.lx.commit();
-            let rhs = self
-                .parse_unary()
-                .context("expected right-hand expression")?;
+            let rhs = self.parse_unary()?;
             exp = Expression::BE(BinExpression {
                 lhs: Box::new(exp),
                 op: BinOperator::Pow,
                 rhs: Box::new(rhs),
             });
         }
-        Ok(exp)
+        Some(exp)
     }
 
-    pub fn parse_unary(&mut self) -> Result<Expression> {
+    pub fn parse_unary(&mut self) -> Option<Expression> {
         if self.match_one(TT::Minus).is_some() {
             self.lx.commit();
             let rhs = self.parse_unary()?;
-            return Ok(Expression::UE(UnExpression {
+            return Some(Expression::UE(UnExpression {
                 op: UnOperator::Neg,
                 rhs: Box::new(rhs),
             }));
@@ -116,20 +105,21 @@ impl Parser {
         self.parse_primary()
     }
 
-    pub fn parse_primary(&mut self) -> Result<Expression> {
+    pub fn parse_primary(&mut self) -> Option<Expression> {
         if let Some(e) = self.match_int_literal() {
             self.lx.commit();
-            return Ok(e);
+            return Some(e);
         }
 
-        self.parse_grouping().context("expected grouping")
+        // TODO: cascade errors instead of reporting multiple times
+        self.parse_grouping()
     }
 
-    pub fn parse_grouping(&mut self) -> Result<Expression> {
-        self.parse_one(TT::LeftParen).context("TODO")?;
-        let e = self.parse_expression().context("expected expression")?;
-        self.parse_one(TT::RightParen).context("TODO")?;
-        Ok(e)
+    pub fn parse_grouping(&mut self) -> Option<Expression> {
+        self.parse_one(TT::LeftParen)?;
+        let e = self.parse_expression()?;
+        self.parse_one(TT::RightParen)?;
+        Some(e)
     }
 
     pub fn match_int_literal(&mut self) -> Option<Expression> {
@@ -137,22 +127,44 @@ impl Parser {
         Some(Expression::IntLiteral(t.lexeme))
     }
 
-    fn parse_one(&mut self, tt: TT) -> Option<Token> {
+    pub fn parse_one(&mut self, tt: TT) -> Option<Token> {
         let t = self.match_one(tt);
-        if t.is_none() && self.lx.current.is_none() {
-            self.eh.clone().unexpected_end_of_input(todo!())
+        match (t, self.lx.current.clone()) {
+            (None, None) => {
+                self.eh.clone().unexpected_end_of_input();
+                None
+            }
+            (None, Some(c)) => {
+                self.eh
+                    .clone()
+                    .unexpected_token(c.lexeme, &[tt], c.token_type);
+                None
+            }
+            (Some(t), _) => {
+                self.lx.commit();
+                Some(t)
+            }
         }
-        self.lx.commit();
-        return None;
     }
 
-    fn parse_one_of(&mut self, tts: &[TT]) -> Result<Token> {
-        let t = self.match_one_of(tts).context(format!(
-            "expected one of {:?}, got {:?}",
-            tts, self.lx.current
-        ))?;
-        self.lx.commit();
-        Ok(t)
+    fn parse_one_of(&mut self, tts: &[TT]) -> Option<Token> {
+        let t = self.match_one_of(tts);
+        match (t, self.lx.current.clone()) {
+            (None, None) => {
+                self.eh.clone().unexpected_end_of_input();
+                None
+            }
+            (None, Some(c)) => {
+                self.eh
+                    .clone()
+                    .unexpected_token(c.lexeme, tts, c.token_type);
+                None
+            }
+            (Some(t), _) => {
+                self.lx.commit();
+                Some(t)
+            }
+        }
     }
 
     fn match_one(&mut self, tt: TT) -> Option<Token> {

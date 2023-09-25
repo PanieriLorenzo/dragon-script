@@ -1,5 +1,5 @@
 use std::fmt::{Debug, Display};
-use std::ops::Add;
+use std::ops::{Add, Range};
 use std::rc::{Rc, Weak};
 
 use miette::{SourceCode, SourceSpan};
@@ -102,5 +102,11 @@ impl Add for SourceView {
             arena: self.arena,
             span: self.span.start..rhs.span.end,
         }
+    }
+}
+
+impl Into<Range<usize>> for SourceView {
+    fn into(self) -> Range<usize> {
+        (self.span.start + 1)..(self.span.end + 1)
     }
 }

@@ -30,17 +30,17 @@ use std::{
     rc::Rc,
     sync::{
         atomic::{AtomicBool, Ordering},
-        OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, Weak,
+        Arc, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, Weak,
     },
 };
 
-use ariadne::{Label, Report, Source};
+use ariadne::{Config, Label, Report, Source};
 use log::debug;
 use thiserror::Error;
 
 use crate::{
     lexer::{Token, TokenType},
-    source::SourceView,
+    source::{SourceArena, SourceView},
 };
 
 #[derive(Debug, Clone)]
@@ -54,30 +54,35 @@ enum ErrorType {
 pub struct DragonError {
     msg: String,
     ty: ErrorType,
-    span: SourceView,
+    span: Option<SourceView>,
 }
 
 impl DragonError {
-    fn report(&self) -> Result<(), std::io::Error> {
-        Report::build(ariadne::ReportKind::Error, (), 12)
+    fn report(&self, src: String) -> Result<(), std::io::Error> {
+        let mut rep = Report::build(ariadne::ReportKind::Error, (), 12)
             .with_code(self.ty.clone() as u16)
-            .with_message(self.msg.clone())
-            .with_label(Label::new(self.span.span.clone()).with_message("here"))
-            .finish()
-            .eprint(Source::from(self.span.arena.upgrade().unwrap().to_string()))
+            .with_message(self.msg.clone());
+        if let Some(span) = self.span.clone() {
+            rep = rep.with_label(Label::new(span.span.clone()).with_message("here"));
+        } else {
+            rep = rep.with_label(Label::new(src.len()..src.len()).with_message("here"));
+        }
+        rep.finish().eprint(Source::from(src))
     }
 }
 
 pub struct ErrorHandler {
     had_error: AtomicBool,
+    src: Rc<SourceArena>,
     errors: Cell<Vec<DragonError>>,
     warnings: Cell<Vec<DragonError>>,
 }
 
 impl ErrorHandler {
-    pub fn new() -> Self {
+    pub fn new(src: &Rc<SourceArena>) -> Self {
         Self {
             had_error: AtomicBool::new(false),
+            src: src.clone(),
             errors: Cell::new(vec![]),
             warnings: Cell::new(vec![]),
         }
@@ -86,7 +91,7 @@ impl ErrorHandler {
     pub fn report_all(self: &Rc<Self>) {
         let inner = self.errors.take();
         for e in inner.iter() {
-            e.report().unwrap();
+            e.report(self.src.to_string()).unwrap();
         }
     }
 
@@ -95,7 +100,7 @@ impl ErrorHandler {
         errors.push(DragonError {
             msg,
             ty: ErrorType::SyntaxError,
-            span,
+            span: Some(span),
         });
         self.had_error.store(true, Ordering::Relaxed);
         self.errors.set(errors);
@@ -107,7 +112,7 @@ impl ErrorHandler {
         errors.push(DragonError {
             msg: format!("unexpected character: '{}'", c),
             ty: ErrorType::SyntaxError,
-            span,
+            span: Some(span),
         });
         self.had_error.store(true, Ordering::Relaxed);
         self.errors.set(errors);
@@ -123,17 +128,19 @@ impl ErrorHandler {
         errors.push(DragonError {
             msg: format!("unexpected token: {}, expected one of {:?}", got, expected),
             ty: ErrorType::SyntaxError,
-            span,
-        })
+            span: Some(span),
+        });
+        self.errors.set(errors);
     }
 
-    pub fn unexpected_end_of_input(self: Rc<Self>, span: SourceView) {
+    pub fn unexpected_end_of_input(self: Rc<Self>) {
         let mut errors = self.errors.take();
         errors.push(DragonError {
             msg: format!("unexpected end of input"),
             ty: ErrorType::SyntaxError,
-            span,
-        })
+            span: None,
+        });
+        self.errors.set(errors);
     }
 }
 

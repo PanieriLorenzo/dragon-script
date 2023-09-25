@@ -14,7 +14,7 @@ use itertools::iproduct;
 
 fn make_context() -> (Rc<SourceArena>, Rc<ErrorHandler>, Lexer) {
     let src = Rc::new(SourceArena::new());
-    let eh = Rc::new(ErrorHandler::new());
+    let eh = Rc::new(ErrorHandler::new(&src));
     let lx = Lexer::new(Reader::from_arena(&src), &eh);
     (src, eh, lx)
 }
