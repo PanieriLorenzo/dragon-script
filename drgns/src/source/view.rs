@@ -26,6 +26,13 @@ impl SourceCode for SourceView {
 }
 
 impl SourceView {
+    pub fn from_arena(arena: &Arc<SourceArena>) -> Self {
+        Self {
+            arena: Arc::downgrade(arena),
+            span: SourceSpan::from((0, arena.len())),
+        }
+    }
+
     pub fn grow(&mut self) {
         self.span = SourceSpan::from((self.span.offset(), self.span.len() + 1));
     }

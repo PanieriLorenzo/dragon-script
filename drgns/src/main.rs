@@ -7,9 +7,10 @@
 
 use clap;
 use error_handler as eh;
+use errors::DragonError;
 use lexer::TokenType;
 use parser::{BinExpression, Expression, Parser};
-use source::SourceArena;
+use source::{Reader, SourceArena, SourceView};
 use std::{
     cell::OnceCell,
     io::Write,
@@ -19,8 +20,11 @@ use std::{
 
 use crate::lexer::Lexer;
 
+use miette::Result;
+
 mod data;
 mod error_handler;
+use error_handler::ErrorHandler;
 mod errors;
 mod lexer;
 mod lookahead;
@@ -38,75 +42,75 @@ struct Args {
     check: bool,
 }
 
+struct Interpreter {
+    args: Args,
+    src: Arc<SourceArena>,
+    pr: Parser,
+    eh: Arc<ErrorHandler>,
+}
+
+impl Interpreter {
+    fn start(&mut self) -> ! {
+        if let Some(path) = self.args.input.clone().as_deref() {
+            // run in batch mode
+            self.run_file(path);
+        } else {
+            // run in REPL mode
+            self.run_prompt();
+        }
+    }
+
+    fn run_file(&mut self, path: &str) -> ! {
+        // define an error handler here for convenience
+        let errexit = || -> ! {
+            std::process::exit(eh::display_errors());
+        };
+
+        let source = match std::fs::read_to_string(path) {
+            Ok(src) => src,
+            Err(err) => match err.kind() {
+                std::io::ErrorKind::NotFound => {
+                    eh::err_io_not_found(path);
+                    errexit();
+                }
+                _ => eh::fatal_unreachable(),
+            },
+        };
+        self.run(source);
+        errexit();
+    }
+
+    fn run_prompt(&mut self) -> ! {
+        loop {
+            // TODO: fancy prompt
+            //print!("{}> ", lx.delim_depth() - 1);
+            print!("> ");
+            std::io::stdout().flush().unwrap_or_else(|_| {
+                eh::fatal_io_generic("stdout cannot be written to");
+            });
+            let mut input = String::new();
+            std::io::stdin().read_line(&mut input).unwrap_or_else(|_| {
+                eh::fatal_io_generic("stdout cannot be read");
+            });
+            self.run(input);
+            eh::display_errors();
+        }
+    }
+
+    fn run(&mut self, input: String) {
+        self.src.intern(input);
+        println!("{}", self.pr.parse_expression().unwrap());
+    }
+}
+
 fn main() -> ! {
-    let args = <Args as clap::Parser>::parse();
-    let mut src = Arc::new(SourceArena::new());
-    let lx = Lexer::new(source::Reader::from_arena(&src));
-    let mut pr = Parser::new(lx);
-
-    // let e = Expression::BinExpression(BinExpression {
-    //     lhs: Box::new(Expression::IntLiteral(42)),
-    //     op: parser::BinOperator::Pow,
-    //     rhs: Box::new(Expression::BinExpression(BinExpression {
-    //         lhs: Box::new(Expression::IntLiteral(22)),
-    //         op: parser::BinOperator::Pow,
-    //         rhs: Box::new(Expression::IntLiteral(11)),
-    //     })),
-    // });
-
-    // let e = pr.parse_expression().unwrap();
-    // println!("{}", e);
-
-    // exit(0);
-    // once main is done parsing cli arguments, we move execution to the
-    // appropriate runners. These runners never return.
-    if let Some(path) = args.input.as_deref() {
-        // run in batch mode
-        run_file(src, pr, path);
-    } else {
-        // run in REPL mode
-        run_prompt(src, pr);
-    }
-}
-
-fn run_file(src: Arc<SourceArena>, mut pr: Parser, path: &str) -> ! {
-    // define an error handler here for convenience
-    let errexit = || -> ! {
-        std::process::exit(eh::display_errors());
+    let src = Arc::new(SourceArena::new());
+    let mut i = Interpreter {
+        args: <Args as clap::Parser>::parse(),
+        src: src.clone(),
+        pr: Parser::new(Lexer::new(source::Reader::from_arena(&src))),
+        eh: Arc::new(ErrorHandler::new()),
     };
 
-    let source = match std::fs::read_to_string(path) {
-        Ok(src) => src,
-        Err(err) => match err.kind() {
-            std::io::ErrorKind::NotFound => {
-                eh::err_io_not_found(path);
-                errexit();
-            }
-            _ => eh::fatal_unreachable(),
-        },
-    };
-    run(&src, &mut pr, source);
-    errexit();
-}
-
-fn run_prompt(src: Arc<SourceArena>, mut pr: Parser) -> ! {
-    loop {
-        // TODO: fancy prompt
-        //print!("{}> ", lx.delim_depth() - 1);
-        print!("> ");
-        std::io::stdout().flush().unwrap_or_else(|_| {
-            eh::fatal_io_generic("stdout cannot be written to");
-        });
-        let mut input = String::new();
-        std::io::stdin().read_line(&mut input).unwrap_or_else(|_| {
-            eh::fatal_io_generic("stdout cannot be read");
-        });
-        run(&src, &mut pr, input);
-        eh::display_errors();
-    }
-}
-
-fn run(src: &Arc<SourceArena>, pr: &mut Parser, input: String) {
-    src.intern(input);
-    println!("{}", pr.parse_expression().unwrap());
+    i.start();
 }

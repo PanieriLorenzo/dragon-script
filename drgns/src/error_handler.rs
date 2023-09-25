@@ -31,6 +31,22 @@ use std::{
     },
 };
 
+use crate::errors::DragonError;
+
+pub struct ErrorHandler {
+    errors: RwLock<Vec<DragonError>>,
+    warnings: RwLock<Vec<DragonError>>,
+}
+
+impl ErrorHandler {
+    pub fn new() -> Self {
+        Self {
+            errors: RwLock::new(vec![]),
+            warnings: RwLock::new(vec![]),
+        }
+    }
+}
+
 #[macro_export]
 macro_rules! assert_pre_condition {
     ($condition:expr) => {
