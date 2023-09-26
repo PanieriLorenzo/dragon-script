@@ -47,6 +47,7 @@ use crate::{
 #[repr(u16)]
 enum ErrorType {
     SyntaxError = 0x1,
+    SemanticError = 0x2,
 }
 
 #[derive(Error, Debug)]
@@ -146,6 +147,14 @@ impl ErrorHandler {
             ty: ErrorType::SyntaxError,
             span,
         });
+    }
+
+    pub fn int_parse_error(self: Rc<Self>, span: Option<SourceView>) {
+        self.push_error(DragonError {
+            msg: format!("integer literal is too large"),
+            ty: ErrorType::SemanticError,
+            span,
+        })
     }
 }
 

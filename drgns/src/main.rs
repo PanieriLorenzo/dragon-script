@@ -21,10 +21,12 @@ use miette::Result;
 mod data;
 mod error_handler;
 use error_handler::ErrorHandler;
+mod eval;
 mod lexer;
 mod lookahead;
 mod parser;
 mod source;
+mod values;
 
 // TODO: overwrite built-in error handling for consistent style
 #[derive(clap::Parser, Debug)]
@@ -93,7 +95,9 @@ impl Interpreter {
 
     fn run(&mut self, input: String) {
         self.src.intern(input);
-        println!("{:?}", self.pr.parse_expression());
+        let mut eval = eval::ExpressionEval::new();
+        self.pr.parse_expression().unwrap().walk(&mut eval);
+        println!("{:?}", eval);
     }
 }
 

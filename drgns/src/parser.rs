@@ -4,6 +4,7 @@ use crate::{
     lexer::{Lexer, Token, TokenType as TT},
     lookahead::{lookahead, Lookahead},
     source::{Reader, SourceView},
+    values::Value,
 };
 use itertools::{multipeek, Itertools, MultiPeek, PeekingNext};
 use std::{fmt::Display, iter::Filter, rc::Rc};
@@ -140,7 +141,17 @@ impl Parser {
 
     pub fn match_int_literal(&mut self) -> Option<Expression> {
         let t = self.match_one(TT::IntLit)?;
-        Some(Expression::IntLiteral(t.lexeme))
+        let si = t.lexeme.to_string();
+        log::trace!("matching int literal '{}'", si);
+        let ri = t.lexeme.to_string().parse::<i64>();
+        if let Ok(i) = ri {
+            Some(Expression::LE(LitExpression(Value::Int(i))))
+        } else {
+            // NOTE: this is technically a semantic error, but to keep evaluator
+            //       clean it is here
+            self.eh.clone().int_parse_error(Some(t.lexeme));
+            Some(Expression::LE(LitExpression(Value::Int(1))))
+        }
     }
 
     pub fn parse_one(&mut self, tt: TT) -> Option<Token> {

@@ -57,3 +57,12 @@ fn lex_arbitrary_text() {
     // just asserting that it lexes all the way through
     for _ in lx {}
 }
+
+#[test]
+fn lex_int_literals() {
+    let (src, mut eh, mut lx) = make_context();
+    src.intern(format!("1234"));
+    let t = lx.next().unwrap();
+    assert_eq!(t.token_type, TokenType::IntLit);
+    assert_eq!(t.lexeme.to_string(), format!("1234"));
+}

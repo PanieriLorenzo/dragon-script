@@ -21,6 +21,7 @@ impl SourceArena {
     ///
     /// You may intern parts of a single line, or multiple lines as well.
     pub fn intern(self: &Rc<Self>, src: String) -> SourceView {
+        log::trace!("interning string: '{:?}'", src);
         let start = self.len();
         self.0.write().unwrap().extend(src.chars());
         SourceView {

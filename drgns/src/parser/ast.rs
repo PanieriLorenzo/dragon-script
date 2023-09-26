@@ -1,36 +1,25 @@
 use std::fmt::Display;
 
-use crate::source::SourceView;
+use crate::{source::SourceView, values::Value};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, derive_more::Display)]
 pub enum Expression {
     BE(BinExpression),
     UE(UnExpression),
-    IntLiteral(SourceView),
+    LE(LitExpression),
 }
 
 impl Expression {
-    fn walk(&self, v: &mut impl Visitor<()>) {
-        v.visit_expression(self);
+    /// walk the expression tree, applying the visitor to each node. Nodes are
+    /// visited in postfix order, so evaluation can be implemented with a simple
+    /// stack machine
+    pub fn walk(&self, v: &mut impl Visitor<()>) {
         match &self {
             Self::BE(be) => be.walk(v),
             Self::UE(ue) => ue.walk(v),
-            Self::IntLiteral(_) => {}
+            Self::LE(le) => le.walk(v),
         }
-    }
-}
-
-impl Display for Expression {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::BE(be) => {
-                write!(f, "{}", be)
-            }
-            Self::UE(ue) => {
-                write!(f, "{}", ue)
-            }
-            Self::IntLiteral(i) => write!(f, "{}", i.clone().into_string()),
-        }
+        v.visit_expression(self);
     }
 }
 
@@ -43,10 +32,10 @@ pub struct BinExpression {
 
 impl BinExpression {
     fn walk(&self, v: &mut impl Visitor<()>) {
-        v.visit_bin_expression(self);
+        self.rhs.walk(v);
         self.lhs.walk(v);
         self.op.walk(v);
-        self.rhs.walk(v);
+        v.visit_bin_expression(self);
     }
 }
 
@@ -93,9 +82,9 @@ pub struct UnExpression {
 
 impl UnExpression {
     fn walk(&self, v: &mut impl Visitor<()>) {
-        v.visit_un_expression(self);
-        self.op.walk(v);
         self.rhs.walk(v);
+        self.op.walk(v);
+        v.visit_un_expression(self);
     }
 }
 
@@ -124,10 +113,20 @@ impl Display for UnOperator {
     }
 }
 
+#[derive(Debug, Clone, derive_more::Display)]
+pub struct LitExpression(pub Value);
+
+impl LitExpression {
+    fn walk(&self, v: &mut impl Visitor<()>) {
+        v.visit_lit_expression(self)
+    }
+}
+
 pub trait Visitor<T> {
     fn visit_expression(&mut self, e: &Expression) -> T;
     fn visit_bin_expression(&mut self, be: &BinExpression) -> T;
     fn visit_bin_operator(&mut self, bo: &BinOperator) -> T;
     fn visit_un_expression(&mut self, ue: &UnExpression) -> T;
     fn visit_un_operator(&mut self, uo: &UnOperator) -> T;
+    fn visit_lit_expression(&mut self, le: &LitExpression) -> T;
 }

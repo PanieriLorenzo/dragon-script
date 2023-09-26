@@ -171,6 +171,8 @@ impl Lexer {
             self.reader.next();
         }
 
+        log::trace!("lexing int literal '{}'", self.reader.current);
+
         TokenType::IntLit
     }
 
