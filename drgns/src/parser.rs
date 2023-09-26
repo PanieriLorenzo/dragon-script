@@ -33,6 +33,15 @@ impl Parser {
         }
     }
 
+    pub fn synchronize(&mut self) {
+        self.lx.commit();
+        while let Some(t) = self.lx.next() {
+            if t.token_type == TT::Semicolon {
+                return;
+            }
+        }
+    }
+
     pub fn drop_all(&mut self) {
         self.eh.clone().unexpected_end_of_input();
         while let Some(_) = self.lx.next() {}
@@ -116,10 +125,17 @@ impl Parser {
     }
 
     pub fn parse_grouping(&mut self) -> Option<Expression> {
-        self.parse_one(TT::LeftParen)?;
-        let e = self.parse_expression()?;
-        self.parse_one(TT::RightParen)?;
-        Some(e)
+        if self.match_one(TT::LeftParen).is_some() {
+            self.lx.commit();
+            let e = self.parse_expression()?;
+            self.parse_one(TT::RightParen)?;
+            return Some(e);
+        }
+
+        self.eh
+            .clone()
+            .expect_expression(self.lx.current.as_ref().map(|t| t.lexeme.clone()));
+        None
     }
 
     pub fn match_int_literal(&mut self) -> Option<Expression> {

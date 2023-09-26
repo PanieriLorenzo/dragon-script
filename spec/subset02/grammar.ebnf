@@ -3,7 +3,7 @@ Program
     ;
 
 Statement
-    = ( Assignment | ExitStmt ), Endl
+    = ( Assignment | ExitStmt ), Semicolon
     ;
 
 ExitStmt

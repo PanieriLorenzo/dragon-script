@@ -142,6 +142,16 @@ impl ErrorHandler {
         });
         self.errors.set(errors);
     }
+
+    pub fn expect_expression(self: Rc<Self>, span: Option<SourceView>) {
+        let mut errors = self.errors.take();
+        errors.push(DragonError {
+            msg: format!("expected expression"),
+            ty: ErrorType::SyntaxError,
+            span,
+        });
+        self.errors.set(errors);
+    }
 }
 
 #[macro_export]

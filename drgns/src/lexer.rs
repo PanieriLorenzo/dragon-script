@@ -25,6 +25,7 @@ mod test;
 #[derive(Debug, Clone, Copy, PartialEq, EnumIter)]
 pub enum TokenType {
     // unambiguously single-character tokens
+    Semicolon,
     LeftParen,
     RightParen,
     Comma,
@@ -185,6 +186,7 @@ impl Lexer {
         let c = self.reader.next()?;
         let token_type = match c {
             // unambiguously single-character tokens
+            ';' => TT::Semicolon,
             ')' => TT::RightParen,
             '(' => TT::LeftParen,
             ',' => TT::Comma,
@@ -219,9 +221,9 @@ impl Lexer {
 
             _ => {
                 log::trace!("unmatched char");
-                self.eh
-                    .clone()
-                    .unexpected_char(self.reader.current.clone(), c);
+                // self.eh
+                //     .clone()
+                //     .unexpected_char(self.reader.current.clone(), c);
                 TT::Unknown
             }
         };
