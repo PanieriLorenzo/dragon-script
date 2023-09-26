@@ -2,17 +2,15 @@ use std::{
     collections::HashMap,
     fmt::Display,
     rc::Rc,
-    sync::{OnceLock, RwLock, Weak},
+    sync::{OnceLock, RwLock},
 };
 
-use anyhow::Error;
-use smallvec::SmallVec;
 use strum_macros::EnumIter;
 
 use crate::{
     assert_unreachable,
     eh::ErrorHandler,
-    error_handler as eh, internal_error,
+    internal_error,
     source::{Reader, SourceView},
 };
 
@@ -68,7 +66,7 @@ fn kw_2_tt(kw: &str) -> Option<TokenType> {
 
 fn tt_2_kw(tt: TokenType) -> Option<String> {
     match tt {
-        TokenType::Exit => Some(format!("exit")),
+        TokenType::Exit => Some("exit".to_string()),
         _ => None,
     }
 }

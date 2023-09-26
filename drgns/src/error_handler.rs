@@ -26,20 +26,19 @@
 use std::{
     backtrace::Backtrace,
     cell::Cell,
-    fmt::Display,
     rc::Rc,
     sync::{
         atomic::{AtomicBool, Ordering},
-        Arc, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, Weak,
+        OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard,
     },
 };
 
-use ariadne::{Config, Label, Report, Source};
-use log::debug;
+use ariadne::{Label, Report, Source};
+
 use thiserror::Error;
 
 use crate::{
-    lexer::{Token, TokenType},
+    lexer::TokenType,
     source::{SourceArena, SourceView},
 };
 
@@ -135,7 +134,7 @@ impl ErrorHandler {
 
     pub fn unexpected_end_of_input(self: Rc<Self>) {
         self.push_error(DragonError {
-            msg: format!("unexpected end of input"),
+            msg: "unexpected end of input".to_string(),
             ty: ErrorType::SyntaxError,
             span: None,
         });
@@ -143,7 +142,7 @@ impl ErrorHandler {
 
     pub fn expect_expression(self: Rc<Self>, span: Option<SourceView>) {
         self.push_error(DragonError {
-            msg: format!("expected expression"),
+            msg: "expected expression".to_string(),
             ty: ErrorType::SyntaxError,
             span,
         });
@@ -151,7 +150,7 @@ impl ErrorHandler {
 
     pub fn int_parse_error(self: Rc<Self>, span: Option<SourceView>) {
         self.push_error(DragonError {
-            msg: format!("integer literal is too large"),
+            msg: "integer literal is too large".to_string(),
             ty: ErrorType::SemanticError,
             span,
         })

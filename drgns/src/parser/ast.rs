@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::{source::SourceView, values::Value};
+use crate::values::Value;
 
 #[derive(Debug, Clone, derive_more::Display)]
 pub enum Expression {

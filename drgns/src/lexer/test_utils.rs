@@ -1,14 +1,9 @@
 use std::{
     collections::HashMap,
-    str::Chars,
     sync::{OnceLock, RwLock},
 };
 
-use crate::source::{Reader, SourceArena};
-
-use super::{Lexer, OnceMap, TokenType};
-
-use itertools::{iproduct, Product};
+use super::{OnceMap, TokenType};
 
 static STR_2_TOKENS: OnceMap<&'static str, TokenType> = OnceLock::new();
 
@@ -47,7 +42,7 @@ pub fn str_2_tokens(s: &str) -> TokenType {
         .read()
         .expect("poisoned lock")
         .get(s)
-        .unwrap_or_else(|| &TokenType::Unknown)
+        .unwrap_or(&TokenType::Unknown)
 }
 
 pub fn tokens_2_str(tt: TokenType) -> &'static str {

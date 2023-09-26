@@ -1,16 +1,19 @@
 use std::{
-    convert::identity,
     fmt::Display,
     rc::Rc,
     sync::{RwLock, RwLockReadGuard},
 };
 
-use miette::{LabeledSpan, SourceOffset, SourceSpan};
-
 use super::view::SourceView;
 
 #[derive(Debug)]
 pub struct SourceArena(RwLock<Vec<char>>);
+
+impl Default for SourceArena {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl SourceArena {
     pub fn new() -> Self {
@@ -35,7 +38,7 @@ impl SourceArena {
     }
 
     pub fn get(&self, idx: usize) -> Option<char> {
-        self.0.read().unwrap().get(idx).map(|&c| c)
+        self.0.read().unwrap().get(idx).copied()
     }
 
     pub fn inner(&self) -> RwLockReadGuard<'_, Vec<char>> {
@@ -72,7 +75,7 @@ impl Reader {
     pub fn from_arena(s: &Rc<SourceArena>) -> Self {
         Self {
             current: SourceView {
-                arena: Rc::downgrade(&s),
+                arena: Rc::downgrade(s),
                 span: 0..0,
             },
             boundary: ReaderBounds::Absolute,

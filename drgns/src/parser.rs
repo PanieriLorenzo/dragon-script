@@ -1,16 +1,11 @@
 use crate::{
     eh::ErrorHandler,
-    error_handler as eh,
     lexer::{Lexer, Token, TokenType as TT},
     lookahead::{lookahead, Lookahead},
-    source::{Reader, SourceView},
     values::Value,
 };
-use itertools::{multipeek, Itertools, MultiPeek, PeekingNext};
-use std::{fmt::Display, iter::Filter, rc::Rc};
-use sugars::boxed;
 
-use anyhow::{Context, Error, Result};
+use std::rc::Rc;
 
 mod ast;
 pub use ast::*;
@@ -36,7 +31,7 @@ impl Parser {
 
     pub fn synchronize(&mut self) {
         self.lx.commit();
-        while let Some(t) = self.lx.next() {
+        for t in self.lx.by_ref() {
             if t.token_type == TT::Semicolon {
                 return;
             }
@@ -45,7 +40,7 @@ impl Parser {
 
     pub fn drop_all(&mut self) {
         self.eh.clone().unexpected_end_of_input();
-        while let Some(_) = self.lx.next() {}
+        for _ in self.lx.by_ref() {}
     }
 
     pub fn parse_expression(&mut self) -> Option<Expression> {

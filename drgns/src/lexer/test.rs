@@ -21,7 +21,7 @@ fn make_context() -> (Rc<SourceArena>, Rc<ErrorHandler>, Lexer) {
 
 #[test]
 fn lex_single_tokens() {
-    let (src, mut eh, mut lx) = make_context();
+    let (src, _eh, mut lx) = make_context();
 
     // actual test
     for tt in TokenType::iter() {
@@ -34,7 +34,7 @@ fn lex_single_tokens() {
 
 #[test]
 fn lex_token_pairs() {
-    let (src, mut eh, mut lx) = make_context();
+    let (src, _eh, mut lx) = make_context();
 
     for (tt1, tt2) in iproduct!(TokenType::iter(), TokenType::iter()) {
         src.intern(tokens_2_str(tt1).to_string());
@@ -50,7 +50,7 @@ fn lex_token_pairs() {
 
 #[test]
 fn lex_arbitrary_text() {
-    let (src, mut eh, mut lx) = make_context();
+    let (src, _eh, lx) = make_context();
     for s in two_char_strings!() {
         src.intern(s);
     }
@@ -60,8 +60,8 @@ fn lex_arbitrary_text() {
 
 #[test]
 fn lex_int_literals() {
-    let (src, mut eh, mut lx) = make_context();
-    src.intern(format!("1234"));
+    let (src, _eh, mut lx) = make_context();
+    src.intern("1234".to_string());
     let t = lx.next().unwrap();
     assert_eq!(t.token_type, TokenType::IntLit);
     assert_eq!(t.lexeme.to_string(), format!("1234"));

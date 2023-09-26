@@ -15,7 +15,7 @@ impl ExpressionEval {
 impl Visitor<()> for ExpressionEval {
     fn visit_expression(&mut self, _: &crate::parser::Expression) {}
 
-    fn visit_bin_expression(&mut self, be: &crate::parser::BinExpression) {}
+    fn visit_bin_expression(&mut self, _be: &crate::parser::BinExpression) {}
 
     fn visit_bin_operator(&mut self, bo: &crate::parser::BinOperator) {
         match bo {

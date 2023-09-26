@@ -5,18 +5,14 @@
 #![feature(trait_alias)]
 #![feature(type_alias_impl_trait)]
 
-use ariadne::{sources, Report, ReportKind};
-use clap;
 use error_handler as eh;
-use lexer::TokenType;
+
 use log::debug;
-use parser::{BinExpression, Expression, Parser};
-use source::{Reader, SourceArena, SourceView};
-use std::{cell::OnceCell, io::Write, process::exit, rc::Rc, sync::RwLock};
+use parser::Parser;
+use source::SourceArena;
+use std::{io::Write, process::exit, rc::Rc};
 
 use crate::lexer::Lexer;
-
-use miette::Result;
 
 mod data;
 mod error_handler;

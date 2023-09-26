@@ -2,8 +2,6 @@ use std::fmt::{Debug, Display};
 use std::ops::{Add, Range};
 use std::rc::{Rc, Weak};
 
-use miette::{SourceCode, SourceSpan};
-
 use crate::assert_pre_condition;
 
 use super::arena::SourceArena;
@@ -104,8 +102,8 @@ impl Add for SourceView {
     }
 }
 
-impl Into<Range<usize>> for SourceView {
-    fn into(self) -> Range<usize> {
-        (self.span.start + 1)..(self.span.end + 1)
+impl From<SourceView> for Range<usize> {
+    fn from(val: SourceView) -> Self {
+        (val.span.start + 1)..(val.span.end + 1)
     }
 }
