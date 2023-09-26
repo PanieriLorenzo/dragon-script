@@ -53,6 +53,7 @@ pub fn str_2_tokens(s: &str) -> TokenType {
 pub fn tokens_2_str(tt: TokenType) -> &'static str {
     use TokenType as TT;
     match tt {
+        TT::Semicolon => ";",
         TT::LeftParen => "(",
         TT::RightParen => ")",
         TT::Comma => ",",
@@ -68,6 +69,13 @@ pub fn tokens_2_str(tt: TokenType) -> &'static str {
         TT::Unknown => "?",
         TT::Pow => "**",
         TT::Exit => "exit",
+    }
+}
+
+pub fn lel(s: &str) -> u32 {
+    match s {
+        "lel" => 1,
+        _ => 0,
     }
 }
 

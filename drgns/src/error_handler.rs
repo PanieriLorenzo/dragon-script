@@ -95,27 +95,28 @@ impl ErrorHandler {
         }
     }
 
-    pub fn syntax_error(self: Rc<Self>, span: SourceView, msg: String) {
+    fn push_error(self: Rc<Self>, err: DragonError) {
         let mut errors = self.errors.take();
-        errors.push(DragonError {
-            msg,
-            ty: ErrorType::SyntaxError,
-            span: Some(span),
-        });
+        errors.push(err);
         self.had_error.store(true, Ordering::Relaxed);
         self.errors.set(errors);
     }
 
+    pub fn syntax_error(self: Rc<Self>, span: SourceView, msg: String) {
+        self.push_error(DragonError {
+            msg,
+            ty: ErrorType::SyntaxError,
+            span: Some(span),
+        });
+    }
+
     pub fn unexpected_char(self: Rc<Self>, span: SourceView, c: char) {
-        let mut errors = self.errors.take();
         log::trace!("unexpected_char");
-        errors.push(DragonError {
+        self.push_error(DragonError {
             msg: format!("unexpected character: '{}'", c),
             ty: ErrorType::SyntaxError,
             span: Some(span),
         });
-        self.had_error.store(true, Ordering::Relaxed);
-        self.errors.set(errors);
     }
 
     pub fn unexpected_token(
@@ -124,33 +125,27 @@ impl ErrorHandler {
         expected: &[TokenType],
         got: TokenType,
     ) {
-        let mut errors = self.errors.take();
-        errors.push(DragonError {
+        self.push_error(DragonError {
             msg: format!("unexpected token: {}, expected one of {:?}", got, expected),
             ty: ErrorType::SyntaxError,
             span: Some(span),
         });
-        self.errors.set(errors);
     }
 
     pub fn unexpected_end_of_input(self: Rc<Self>) {
-        let mut errors = self.errors.take();
-        errors.push(DragonError {
+        self.push_error(DragonError {
             msg: format!("unexpected end of input"),
             ty: ErrorType::SyntaxError,
             span: None,
         });
-        self.errors.set(errors);
     }
 
     pub fn expect_expression(self: Rc<Self>, span: Option<SourceView>) {
-        let mut errors = self.errors.take();
-        errors.push(DragonError {
+        self.push_error(DragonError {
             msg: format!("expected expression"),
             ty: ErrorType::SyntaxError,
             span,
         });
-        self.errors.set(errors);
     }
 }
 

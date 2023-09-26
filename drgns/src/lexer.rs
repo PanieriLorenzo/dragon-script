@@ -59,6 +59,20 @@ type OnceMap<K, V> = OnceLock<RwLock<HashMap<K, V>>>;
 
 static KEYWORDS: OnceMap<&'static str, TokenType> = OnceLock::new();
 
+fn kw_2_tt(kw: &str) -> Option<TokenType> {
+    match kw {
+        "exit" => Some(TokenType::Exit),
+        _ => None,
+    }
+}
+
+fn tt_2_kw(tt: TokenType) -> Option<String> {
+    match tt {
+        TokenType::Exit => Some(format!("exit")),
+        _ => None,
+    }
+}
+
 fn init_keywords() -> &'static RwLock<HashMap<&'static str, TokenType>> {
     KEYWORDS.get_or_init(|| RwLock::new([("exit", TokenType::Exit)].iter().cloned().collect()))
 }
