@@ -1,13 +1,20 @@
 use std::{
+    cell::{Cell, RefCell},
+    collections::HashMap,
     fmt::Display,
     rc::Rc,
     sync::{RwLock, RwLockReadGuard},
 };
 
+use bimap::BiMap;
+
 use super::view::SourceView;
 
 #[derive(Debug)]
-pub struct SourceArena(RwLock<Vec<char>>);
+pub struct SourceArena {
+    data: RwLock<Vec<char>>,
+    ids: RefCell<BiMap<String, u16>>,
+}
 
 impl Default for SourceArena {
     fn default() -> Self {
@@ -17,7 +24,12 @@ impl Default for SourceArena {
 
 impl SourceArena {
     pub fn new() -> Self {
-        Self(RwLock::new(vec![]))
+        let mut ret = Self {
+            data: RwLock::new(vec![]),
+            ids: RefCell::new(BiMap::new()),
+        };
+        ret.ids.borrow_mut().insert("REPL".to_string(), 0);
+        ret
     }
 
     /// Intern a single string of raw source code, including newlines.
@@ -26,7 +38,7 @@ impl SourceArena {
     pub fn intern(self: &Rc<Self>, src: String) -> SourceView {
         log::trace!("interning string: '{:?}'", src);
         let start = self.len();
-        self.0.write().unwrap().extend(src.chars());
+        self.data.write().unwrap().extend(src.chars());
         SourceView {
             arena: Rc::<SourceArena>::downgrade(self),
             span: start..(start + src.len()),
@@ -34,15 +46,15 @@ impl SourceArena {
     }
 
     pub fn len(&self) -> usize {
-        self.0.read().unwrap().len()
+        self.data.read().unwrap().len()
     }
 
     pub fn get(&self, idx: usize) -> Option<char> {
-        self.0.read().unwrap().get(idx).copied()
+        self.data.read().unwrap().get(idx).copied()
     }
 
     pub fn inner(&self) -> RwLockReadGuard<'_, Vec<char>> {
-        self.0.read().unwrap()
+        self.data.read().unwrap()
     }
 }
 

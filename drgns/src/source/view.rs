@@ -10,6 +10,7 @@ use super::arena::SourceArena;
 pub struct SourceView {
     pub arena: Weak<SourceArena>,
     pub span: std::ops::Range<usize>,
+    pub source_id: u16,
 }
 
 impl SourceView {
@@ -17,6 +18,7 @@ impl SourceView {
         Self {
             arena: Rc::downgrade(arena),
             span: 0..arena.len(),
+            source_id: todo!(),
         }
     }
 
