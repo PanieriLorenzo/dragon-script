@@ -42,6 +42,7 @@ impl SourceArena {
         SourceView {
             arena: Rc::<SourceArena>::downgrade(self),
             span: start..(start + src.len()),
+            source_id: todo!(),
         }
     }
 
@@ -89,6 +90,7 @@ impl Reader {
             current: SourceView {
                 arena: Rc::downgrade(s),
                 span: 0..0,
+                source_id: todo!(),
             },
             boundary: ReaderBounds::Absolute,
         }
@@ -99,6 +101,7 @@ impl Reader {
             current: SourceView {
                 arena: s.arena.clone(),
                 span: 0..0,
+                source_id: todo!(),
             },
             boundary: ReaderBounds::Relative(s),
         }

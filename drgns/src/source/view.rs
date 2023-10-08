@@ -100,6 +100,7 @@ impl Add for SourceView {
         Self {
             arena: self.arena,
             span: self.span.start..rhs.span.end,
+            source_id: todo!(),
         }
     }
 }
