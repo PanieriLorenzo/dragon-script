@@ -1,0 +1,9 @@
+{
+    "esy": {
+        "build": "dune build -p drgnc"
+    },
+    "dependencies": {
+        "ocaml": "5.1.x",
+        "@opam/dune": "*"
+    }
+}
