@@ -1,0 +1,6 @@
+[book]
+authors = ["Lorenzo Panieri"]
+language = "en"
+multilingual = false
+src = "src"
+title = "The Dragon Programming Language"
