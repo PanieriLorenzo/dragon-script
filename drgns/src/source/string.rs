@@ -8,6 +8,16 @@ pub struct SourceString {
     pub(crate) pos: Range<usize>,
 }
 
+#[derive(Clone)]
+pub enum Production {
+    /// A raw string segment directly from the source
+    Atom(SourceString),
+
+    /// A production made of several disjoint segments
+    Fused(Vec<SourceString>)
+}
+
+
 
 // impl SourceString {
 //     pub fn from_source(source: &Rc<Source>) -> Self {
