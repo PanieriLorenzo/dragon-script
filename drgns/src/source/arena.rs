@@ -11,6 +11,7 @@ use bimap::BiMap;
 use super::view::SourceView;
 
 #[derive(Debug)]
+#[deprecated]
 pub struct SourceArena {
     data: RwLock<Vec<char>>,
     ids: RefCell<BiMap<String, u16>>,
