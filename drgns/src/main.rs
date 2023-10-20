@@ -35,6 +35,8 @@ struct Args {
     check: bool,
 }
 
+
+#[deprecated]
 struct Interpreter {
     args: Args,
     src: Rc<SourceArena>,

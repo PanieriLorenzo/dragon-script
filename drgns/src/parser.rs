@@ -2,7 +2,7 @@ use crate::{
     eh::ErrorHandler,
     lexer::{Lexer, Token, TokenType as TT},
     lookahead::{lookahead, Lookahead},
-    values::Value,
+    values::Value, source::{Source, Reader},
 };
 
 use std::rc::Rc;
@@ -16,6 +16,7 @@ trait TokenStream = Iterator<Item = Token>;
 /// # Method Naming Convention:
 /// - `parse`: on fail doesn't consume tokens and returns error with context
 /// - `match`: never consumes tokens, only advances lookahead, returns option
+#[deprecated]
 pub struct Parser {
     lx: Lookahead<Lexer>,
     eh: Rc<ErrorHandler>,
@@ -27,6 +28,10 @@ impl Parser {
             lx: lookahead(lx),
             eh: eh.clone(),
         }
+    }
+
+    pub fn from_source(src: Source, eh: &Rc<ErrorHandler>) -> Self {
+        todo!()
     }
 
     pub fn synchronize(&mut self) {
