@@ -27,6 +27,7 @@ mod values;
 // TODO: overwrite built-in error handling for consistent style
 #[derive(clap::Parser, Debug)]
 #[command(author, version, about, long_about = None)]
+#[deprecated]
 struct Args {
     #[arg(short, long)]
     input: Option<String>,
