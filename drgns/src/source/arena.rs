@@ -67,12 +67,15 @@ impl Display for SourceArena {
     }
 }
 
+
 #[derive(Clone)]
+#[deprecated]
 pub struct Reader {
     pub current: SourceView,
     boundary: ReaderBounds,
 }
 
+#[deprecated]
 #[derive(Clone)]
 enum ReaderBounds {
     Absolute,
