@@ -5,6 +5,7 @@
 #![feature(trait_alias)]
 #![feature(type_alias_impl_trait)]
 
+use clap::Subcommand;
 use error_handler as eh;
 
 use log::debug;
@@ -27,6 +28,7 @@ mod values;
 // TODO: overwrite built-in error handling for consistent style
 #[derive(clap::Parser, Debug)]
 #[command(author, version, about, long_about = None)]
+#[deprecated]
 struct Args {
     #[arg(short, long)]
     input: Option<String>,
@@ -35,6 +37,47 @@ struct Args {
     check: bool,
 }
 
+#[derive(clap::Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Option<Commands>,
+}
+
+#[derive(Subcommand, Debug)]
+enum Commands {
+    /// Builds and runs a file
+    Run {
+        /// The input file path
+        input: Option<String>
+    },
+
+    /// Builds a file only
+    Build {
+        input: Option<String>
+    },
+
+    /// Checks syntax and some semantics, without fully building
+    Check {
+        input: Option<String>
+    },
+}
+
+fn main() {
+    let cli = <Cli as clap::Parser>::parse();
+    match &cli.command {
+        Some(Commands::Run{input: _}) => todo!(),
+        Some(Commands::Build{input: _}) => todo!(),
+        Some(Commands::Check{input: _}) => todo!(),
+        None => repl(),
+    }
+}
+
+fn repl() {
+    let eh = Arc::new(ErrorHandler::new())
+}
+
+#[deprecated]
 struct Interpreter {
     args: Args,
     src: Rc<SourceArena>,
@@ -97,7 +140,8 @@ impl Interpreter {
     }
 }
 
-fn main() -> ! {
+#[deprecated]
+fn old_main() -> ! {
     std::env::set_var("RUST_LOG", "trace");
     env_logger::builder().format_timestamp(None).init();
     let src = Rc::new(SourceArena::new());
@@ -111,3 +155,5 @@ fn main() -> ! {
 
     i.start();
 }
+
+

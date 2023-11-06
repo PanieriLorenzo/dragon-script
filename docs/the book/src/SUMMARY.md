@@ -6,3 +6,5 @@
     - [Installation](./Getting%20Started/Installation.md)
     - [Hello World](./Getting%20Started/Hello%20World.md)
 - [Programming a Guessing Game](./Programming%20a%20Guessing%20Game.md)
+
+- [Packaging a Project](./Packaging%20a%20Project/README.md)

@@ -11,6 +11,7 @@ use bimap::BiMap;
 use super::view::SourceView;
 
 #[derive(Debug)]
+#[deprecated]
 pub struct SourceArena {
     data: RwLock<Vec<char>>,
     ids: RefCell<BiMap<String, u16>>,
@@ -66,12 +67,15 @@ impl Display for SourceArena {
     }
 }
 
+
 #[derive(Clone)]
+#[deprecated]
 pub struct Reader {
     pub current: SourceView,
     boundary: ReaderBounds,
 }
 
+#[deprecated]
 #[derive(Clone)]
 enum ReaderBounds {
     Absolute,

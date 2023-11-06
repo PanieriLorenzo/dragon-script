@@ -1,5 +1,6 @@
 //! An iterator that keeps a lookahead until it is committed, similar to Multipeek
 
+#[deprecated]
 pub struct Lookahead<I: Iterator + Clone>
 where
     I::Item: Clone,

@@ -1,7 +1,7 @@
 # Programming a Guessing Game
 
 ```python
-import std::random::rand_range
+import stl::random::rand_range
 
 println("Guess the number!")
 
