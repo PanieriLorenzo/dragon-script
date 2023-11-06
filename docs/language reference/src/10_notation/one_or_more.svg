@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="139" height="53">
+   <defs>
+      <style type="text/css">
+    @namespace "http://www.w3.org/2000/svg";
+    .line                 {fill: none; stroke: #3A0027; stroke-width: 1;}
+    .bold-line            {stroke: #14000E; shape-rendering: crispEdges; stroke-width: 2;}
+    .thin-line            {stroke: #1F0014; shape-rendering: crispEdges}
+    .filled               {fill: #3A0027; stroke: none;}
+    text.terminal         {font-family: Verdana, Sans-serif;
+                            font-size: 12px;
+                            fill: #14000E;
+                            font-weight: bold;
+                          }
+    text.nonterminal      {font-family: Verdana, Sans-serif;
+                            font-size: 12px;
+                            fill: #1A0011;
+                            font-weight: normal;
+                          }
+    text.regexp           {font-family: Verdana, Sans-serif;
+                            font-size: 12px;
+                            fill: #1F0014;
+                            font-weight: normal;
+                          }
+    rect, circle, polygon {fill: #3A0027; stroke: #3A0027;}
+    rect.terminal         {fill: #FF80D4; stroke: #3A0027; stroke-width: 1;}
+    rect.nonterminal      {fill: #FFBAE8; stroke: #3A0027; stroke-width: 1;}
+    rect.text             {fill: none; stroke: none;}
+    polygon.regexp        {fill: #FFD7F2; stroke: #3A0027; stroke-width: 1;}
+  </style>
+   </defs>
+   <polygon points="9 33 1 29 1 37"/>
+   <polygon points="17 33 9 29 9 37"/>
+   <a xmlns:xlink="http://www.w3.org/1999/xlink"
+       xlink:href="#foo"
+       xlink:title="foo">
+      <rect x="51" y="19" width="40" height="32"/>
+      <rect x="49" y="17" width="40" height="32" class="nonterminal"/>
+      <text class="nonterminal" x="59" y="37">foo</text>
+   </a>
+   <path class="line"
+          d="m17 33 h2 m20 0 h10 m40 0 h10 m-80 0 l20 0 m-1 0 q-9 0 -9 -10 l0 -12 q0 -10 10 -10 m60 32 l20 0 m-20 0 q10 0 10 -10 l0 -12 q0 -10 -10 -10 m-60 0 h10 m0 0 h50 m23 32 h-3"/>
+   <polygon points="129 33 137 29 137 37"/>
+   <polygon points="129 33 121 29 121 37"/>
+</svg>
