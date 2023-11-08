@@ -15,6 +15,7 @@
 - [Statements](./60_statements/README.md)
 - [Functions](./70_funcs/README.md)
 - [Type System](./80_types/README.md)
+    - [Type Model](./80_types/10_type_model.md)
 - [Names](./90_names/README.md)
 - [Execution Model](./100_execution_model/README.md)
     - [Values](./100_execution_model/10_values.md)

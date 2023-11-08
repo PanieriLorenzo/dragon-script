@@ -7,3 +7,4 @@
 - Ruby: procedures end with bang
 - JavaScript: syntax
 - SmallTalk: functions are messages, they are passed to the receiver, not the other way around
+- Zig: compile-time evaluation
