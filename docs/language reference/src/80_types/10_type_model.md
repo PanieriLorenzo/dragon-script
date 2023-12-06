@@ -1,6 +1,6 @@
 # Type Model
 
-Dragon uses algebraic data types (ADTs) as well as composite datatypes such as structs, objects and lists as the basis for its type system.
+Dragon uses algebraic data types (ADTs) as well as composite datatypes such as types, objects and lists as the basis for its type system.
 
 Types are formally modelled as sets of values. For instance, `int` is the set of every signed integers that fit in 64 bits using 2's complement. New types can be composed from old types by algebraic manipulation of sets, as well as by special mappings called *type combinators*.
 
@@ -13,15 +13,15 @@ First-order types are typical types, that are modelled as sets of values.
 There are two types that are considered "atomic" as they cannot be broken down further.
 
 - `never`: a type that has no members. As `never` has no members, it cannot be instantiated at any point, and is used to model impossible scenarios, for example, it's the return type of a function that always panics.
-- `none`: the unit type. It has only one member, we don't care about the value of its member, in fact we use the keyword `none` interchangeably to mean the type `none` and the value `none`. Note that many unit-types are constructable other than `none`, but we tend to only model `none` as having all the properties of the unit type in the type-theoretical sense.
+- `none`: the unit type. It has only one member, we don't care about the value of its member, in fact we use the keyword `none` interchangeably to mean the type `none` and the value `none`. Note that many unit-types are contypeable other than `none`, but we tend to only model `none` as having all the properties of the unit type in the type-theoretical sense.
 
-We can construct a type directly from its members, since values aren't types, we cannot use type operators on them, instead we have to leapfrog through the `set` type first, as sets can be easily converted to types.
+We can contype a type directly from its members, since values aren't types, we cannot use type operators on them, instead we have to leapfrog through the `set` type first, as sets can be easily converted to types.
 
 ```ruby
 DecimalDigit := {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}.to_type()
 ```
 
-We will define the `set` type later, when we talk about composite types, for now just assume that we can use it to construct basic types.
+We will define the `set` type later, when we talk about composite types, for now just assume that we can use it to contype basic types.
 
 The language provides us with some built-in types. These are colloquially known as *plain old data* (POD) types. These are defined in the compiler, so they don't have a formal definition expressed in terms of this type model, but we can approximately describe them in terms of their members.
 
@@ -37,9 +37,9 @@ float := {0.0, 0.1, 0.2, ..., -0.0, -0.1, -0.2, ..., nan, -nan, inf, -inf}.to_ty
 The language additionally provides us with some more abstract types:
 - `any`: the type defined as having all values (top type), including itself
 
-Next, we need to define composite types, i.e. types that combine simpler types to construct more complex structures. These are still first-order types, as their members are values, but they just have a more complex structure.
+Next, we need to define composite types, i.e. types that combine simpler types to contype more complex typeures. These are still first-order types, as their members are values, but they just have a more complex typeure.
 
-The first two composite types are sum-types (enums) and product-types (tuples). These form the basis for constructing algebraic data types (ADTs).
+The first two composite types are sum-types (enums) and product-types (tuples). These form the basis for contypeing algebraic data types (ADTs).
 
 The sum-type (denoted with the operator `|`), is defined as the set of values resulting from the union of two types.
 
@@ -50,7 +50,7 @@ TypeFooBar := TypeFoo | TypeBar
 assert!(TypeFooBar == {1, 2, 3, 4, 5}.to_type())
 ```
 
-The sum-type is used very often to implement dynamic-like code, without explicitly requiring dynamic typing constructs. Very often we use sum-types to represent nullable data. We will colloquially call this pattern *option* types or *optional* types. We can write an imperative style deferred initialization like this:
+The sum-type is used very often to implement dynamic-like code, without explicitly requiring dynamic typing contypes. Very often we use sum-types to represent nullable data. We will colloquially call this pattern *option* types or *optional* types. We can write an imperative style deferred initialization like this:
 
 ```ruby
 maybe_uninitialized: int | none := none
@@ -122,7 +122,7 @@ Finally there are negative types, which are abstract types that include all valu
 NotInt := !int
 ```
 
-We can construct subtraction types fairly easily by combining negative and intersection types, like this:
+We can contype subtraction types fairly easily by combining negative and intersection types, like this:
 ```rust
 SomeInts := {0, 1, 2, 3, 4, 5, 6}
 EvenNumbers := {0, 0.0, 2, 2.0, 4, 4.0, 6, 6.0}
@@ -146,40 +146,40 @@ euros_balance: Euros = 1000.0
 assert!(dollars_balance == euros_balance)
 ```
 
-Opaque types let us define two distinct types, that are both just wrappers around `float`, but which do not inherit the properties of their inner types. We can do this by wrapping a type in a `struct` expression.
+Opaque types let us define two distinct types, that are both just wrappers around `float`, but which do not inherit the properties of their inner types. We can do this by wrapping a type in a `type` expression.
 
 ```rust
-OpaqueSum := struct(int | float)
+OpaqueSum := type(int | float)
 OpaqueProduct := sturct(int, float)
 ```
 
 We can now define types with equivalent signatures, which are not comparable.
 
 ```rust
-TypeFoo := struct(int)
-TypeBar := struct(int)
+TypeFoo := type(int)
+TypeBar := type(int)
 foo := TypeFoo(42)
 bar := TypeBar(42)
 assert!(foo != bar)
 ```
 
-The language also provides an alternative syntax for structs, where fields are labelled: this is the object notation, and it resembles classes in OOP languages. This is not required for a theoretical model of the language, it is just convenient.
+The language also provides an alternative syntax for types, where fields are labelled: this is the object notation, and it resembles classes in OOP languages. This is not required for a theoretical model of the language, it is just convenient.
 
 ```ruby
 # labelled product type
-Person := struct {
+Person := type {
     name: str,
     age: uint,
 }
 
 # labelled sum type
-NaiveMoney := struct {
+NaiveMoney := type {
     | dollars: float
     | euros: float
 }
 
 # a combination of the two
-CorrectMoney := struct {
+CorrectMoney := type {
     | dollars: {
         wholes: int,
         cents: int
@@ -191,9 +191,9 @@ CorrectMoney := struct {
 }
 ```
 
-Structs also serve as a namespace, or more precisely a *typespace* for functions associated with the type, but this is beyond the type model.
+types also serve as a namespace, or more precisely a *typespace* for functions associated with the type, but this is beyond the type model.
 
-Next, we need to define *constructors*. Constructors are just functions that retun a type. We can use them to model generic types. For instance, we can make our custom sum and product types:
+Next, we need to define *contypeors*. Contypeors are just functions that retun a type. We can use them to model generic types. For instance, we can make our custom sum and product types:
 
 ```rust
 function my_sum(a: type, b: type) -> type {
@@ -205,7 +205,7 @@ function my_product(a: type, b: type) -> type {
 }
 ```
 
-We use *constructors* to model the remaining composite types. Note that these are defined in the compiler and there is no way to write a constructor for them, we are just interested in the signature that such a construct would have
+We use *contypeors* to model the remaining composite types. Note that these are defined in the compiler and there is no way to write a contypeor for them, we are just interested in the signature that such a contype would have
 
 ```ruby
 # a list [T]
@@ -215,7 +215,7 @@ function list(T: type) -> type
 function set(T: type) -> type
 ```
 
-The final layer of first-roder types are traits. Traits are types that are described in therms of their properties, rather than by enumerating their membders. Traits may have infinite members, so it's impossible to construct them from the bottom, we have to construct them from the top, by carving out a subset of the `any` type based on certain properties that we want the trait to have.
+The final layer of first-roder types are traits. Traits are types that are described in therms of their properties, rather than by enumerating their membders. Traits may have infinite members, so it's impossible to contype them from the bottom, we have to contype them from the top, by carving out a subset of the `any` type based on certain properties that we want the trait to have.
 
 Traits are essentially a contract, with a set of rules that a type must obey to be a sub-type of the trait. The most straight-forward trait is one with a set of function signatures that the type must implement.
 
@@ -306,7 +306,7 @@ fn multiply_an_add<T: Num>(a: T, b: T, c: T) -> T {
 
 This is okay, but we now need to know what `<...>` means, and that it has all kinds of special rules that do not resemble regular parameters. Ultimately it is a subjective design choice whether to use generic arguments or have meta-types. For Dragon, we wanted the language to have relatively little syntax.
 
-Now, there are probably many constructs that we haven't thought about that can be constructed using generic types, but the gist of it, is that we can write generic code, where we impose restrictions on which types the generic parameters can have.
+Now, there are probably many contypes that we haven't thought about that can be contypeed using generic types, but the gist of it, is that we can write generic code, where we impose restrictions on which types the generic parameters can have.
 
 Third-order and higher enters academic territory and doesn't have many practical uses.
 

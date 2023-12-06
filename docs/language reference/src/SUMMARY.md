@@ -12,6 +12,7 @@
     - [Dragon Object Notation](./30_packs/30_don/README.md)
 - [Modules](./40_mods/README.md)
 - [Expressions](./50_exprs/README.md)
+    - [String Expressions](./50_exprs/10_strings_expressions.md)
 - [Statements](./60_statements/README.md)
 - [Functions](./70_funcs/README.md)
 - [Type System](./80_types/README.md)
@@ -23,3 +24,5 @@
     - [Thread Safety](./100_execution_model/30_thread_safety.md)
 - [ABI](./110_abi/README.md)
 - [Influences](./120_influences/README.md)
+- [Subsets](./200_subsets/README.md)
+    - [Untyped Dragon](./200_subsets/10_untyped_dragon/README.md)
